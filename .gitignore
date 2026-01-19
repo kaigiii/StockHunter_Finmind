@@ -1,0 +1,65 @@
+# 虛擬環境
+venv/
+env/
+ENV/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# 環境變數文件
+.env
+.env.local
+.env.production
+config.env
+
+# 數據文件與進度
+csv_exports/
+collector_progress.json
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# 作業系統
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# 日誌文件
+*.log
+
+# 數據庫文件
+*.db
+*.sqlite
+*.sqlite3
+
+# 臨時文件
+*.tmp
+*.temp
