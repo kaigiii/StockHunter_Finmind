@@ -26,6 +26,8 @@ class FinMindRevolver:
         self.apis = []
         # 追蹤 Token 狀態: {api_instance: {'valid': True, 'cooldown_until': datetime}}
         self.token_status = {}
+        # 全局冷卻計時器 (用於同步所有線程)
+        self.global_cooldown_until = None
         self._lock = threading.Lock()
         
         if not self.tokens:
@@ -65,68 +67,78 @@ class FinMindRevolver:
 
         with self._lock:
             # 嘗試尋找可用 Token
-            # 我們最多遍歷一圈 apis 列表來找可用的
-            checked_count = 0
             total_apis = len(self.apis)
             
-            while checked_count < total_apis:
-                api = next(self._cycler)
-                status = self.token_status.get(api)
-                
-                if status['cooldown_until']:
-                    if datetime.now() < status['cooldown_until']:
-                        checked_count += 1
-                        continue
+            while True:
+                # 1. 檢查是否有全局冷卻 (Global Cooldown)
+                # 這表示已經有線程發現全部 Token 都掛了，並設定了鬧鐘
+                if self.global_cooldown_until:
+                    now = datetime.now()
+                    if now < self.global_cooldown_until:
+                        # 還有時間，繼續睡 Wait silently
+                        wait_seconds = (self.global_cooldown_until - now).total_seconds()
+                        if wait_seconds > 0:
+                            # 釋放鎖並睡眠 (不印 Log 以免洗版)
+                            self._lock.release()
+                            try:
+                                time.sleep(min(wait_seconds + 0.5, 5)) # 每 5 秒醒來一次檢查，保持靈活性
+                            finally:
+                                self._lock.acquire()
+                            continue
                     else:
-                        # 冷卻結束，恢復使用
-                        logger.info(f"Token 冷卻結束，恢復使用")
-                        status['cooldown_until'] = None
-                        status['valid'] = True
-                        return api
-                else:
-                    return api
-            
-            # 如果走到這，表示所有 Token 都在冷卻
-            logger.warning("所有 Token 皆在冷卻中...")
-            
-            # 找出最早解禁的那個
-            earliest_wakeup = None
-            for api in self.apis:
-                t = self.token_status[api].get('cooldown_until')
-                if t:
-                    if earliest_wakeup is None or t < earliest_wakeup:
-                        earliest_wakeup = t
-            
-            if earliest_wakeup:
-                wait_seconds = (earliest_wakeup - datetime.now()).total_seconds()
-                wait_seconds = max(1, wait_seconds) # 至少等 1 秒
-                logger.warning(f"[Sleep] 強制睡眠 {int(wait_seconds)} 秒，等待最早的 Token 恢復...")
-                time.sleep(wait_seconds)
-                
-                # 醒來後遞歸再次獲取
-                # 注意：這裡釋放了 lock 再遞歸可能會導致競爭，但因為我們都在一個大邏輯裡
-                # 簡單起見，直接返回 next(self._cycler) 因為理論上它應該好了
-                # 但為了安全，還是遞歸呼叫自己 (遞歸層數通常不會深，除非運氣極差)
-                return self.get_api() # 這裡實際上會遞歸死鎖 if strict re-entry, but Python lock is re-entrant for same thread? No, threading.Lock is NOT re-entrant. RLock is.
-                # 但 get_api 對外只有一個入口。這裡遞歸會導致死鎖嗎？
-                # wait, self._lock is held. calling self.get_api() again needs lock. 
-                # Yes, standard Lock will deadlock.
-                # FIX: Do not recurse. Just loop again.
-                
-                # 改為 Loop 結構更安全，但要小心
-                # 這裡為了簡單，我們直接拿一個並返回（假設醒來後它好了）
-                # 或者是，我們不鎖住 sleep？
-                # "with self._lock" covers the sleep. This blocks ALL threads. That's actually correct behavior if ALL tokens are down.
-                # So just loop back to start of while.
-                
-                # 修正後的邏輯：不用遞歸，直接在 while 迴圈外處理 Wait，然後 continue outer loop?
-                # 其實最簡單就是：如果 checked_count >= total_apis，就 sleep，然後重置 checked_count = 0，繼續找
-            
-            # 為了避免複雜的代碼結構變更，這裡做一個簡單的 workaround:
-            # 既然所有都在冷卻，sleep 之後直接 return next(self._cycler)，讓下次調用去處理（如果還沒好，會再進來）
-            return next(self._cycler)
+                        # 全局時間已到，解除警報，重置狀態
+                        self.global_cooldown_until = None
+                        # 順便把所有稍微過期的 Token 狀態重置，雖然下面循環也會做，但這樣更明確
+                        logger.info("全局冷卻結束，恢復運作")
 
-            
+                # 2. 遍歷尋找可用 Token
+                for _ in range(total_apis):
+                    api = next(self._cycler)
+                    status = self.token_status.get(api)
+                    
+                    if status['cooldown_until']:
+                        if datetime.now() < status['cooldown_until']:
+                            continue
+                        else:
+                            # 冷卻結束，恢復使用
+                            logger.info(f"Token 冷卻結束，恢復使用")
+                            status['cooldown_until'] = None
+                            status['valid'] = True
+                            return api
+                    else:
+                        # 找到可用 Token
+                        return api
+                
+                # 3. 如果跑到這，表示剛剛檢查一輪發現所有 Token 都在冷卻
+                # 找出最早解禁的時間，設定全局冷卻
+                
+                if self.global_cooldown_until:
+                     # 可能別的線程剛好設定了，continue 重跑流程 1
+                     continue
+
+                earliest_wakeup = None
+                for api in self.apis:
+                    t = self.token_status[api].get('cooldown_until')
+                    if t:
+                        if earliest_wakeup is None or t < earliest_wakeup:
+                            earliest_wakeup = t
+                
+                if earliest_wakeup:
+                    # 設定全局冷卻時間
+                    self.global_cooldown_until = earliest_wakeup
+                    wait_seconds = (earliest_wakeup - datetime.now()).total_seconds()
+                    
+                    if wait_seconds > 0:
+                        logger.warning(f"[Sleep] 所有 Token ({len(self.apis)} 個) 冷卻中... 全局暫停 {int(wait_seconds)+1} 秒 (至 {earliest_wakeup.strftime('%H:%M:%S')})")
+                    else:
+                        # 剛好到期，不用設
+                        self.global_cooldown_until = None
+                        continue
+                        
+                else:
+                    # 理論上不該發生，防止無窮迴圈
+                    time.sleep(1)
+
     def _mark_token_cooldown(self, api, hours=1):
         """將指定 API 標記為冷卻"""
         from datetime import datetime, timedelta

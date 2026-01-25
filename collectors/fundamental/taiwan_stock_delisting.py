@@ -6,6 +6,7 @@ API: TaiwanStockDelisting
 """
 
 import logging
+import pandas as pd
 from datetime import datetime
 from core.database import DatabaseManager
 from collectors.base import BaseOneShotCollector

@@ -55,11 +55,28 @@ class TaiwanVariousIndicators5SecondsCollector(BaseDateListCollector):
                     updated_at = CURRENT_TIMESTAMP
             """
             
-            # 準備批次數據
-            data_rows = []
+            # 準備批次數據 (需去重複，避免 Postgres ON CONFLICT 報錯)
+            data_map = {}
             for _, row in df.iterrows():
-                taiex_value = float(row.get('TAIEX', 0))
-                data_rows.append((date, taiex_value, datetime.now()))
+                try:
+                    # TAIEX 可能是字串或數字，需處理
+                    taiex_val = row.get('TAIEX')
+                    if pd.isna(taiex_val):
+                        continue
+                    
+                    # 轉為 float，若失敗則跳過
+                    taiex_val = float(str(taiex_val).replace(',', ''))
+                    
+                    # 以 date 為 key 進行去重，保留最後一筆
+                    data_map[date] = (date, taiex_val, datetime.now())
+                except (ValueError, TypeError):
+                    continue
+            
+            data_rows = list(data_map.values())
+            
+            if not data_rows:
+                logger.info(f"日期 {date} 無有效加權指數數據")
+                return True
             
             # 執行批次插入
             execute_values(cursor, insert_query, data_rows)

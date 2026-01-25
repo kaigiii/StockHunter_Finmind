@@ -6,6 +6,7 @@ API: TaiwanStockBalanceSheet
 """
 
 import logging
+import pandas as pd
 from datetime import datetime
 from collectors.base import BaseStockListCollector
 

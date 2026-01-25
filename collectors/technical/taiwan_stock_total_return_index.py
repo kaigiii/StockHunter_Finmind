@@ -67,10 +67,19 @@ class TaiwanStockTotalReturnIndexCollector(BaseDateRangeCollector):
             data = data.copy()
             data['date'] = pd.to_datetime(data['date']).dt.date
             
+            # 處理欄位名稱不一致的問題
+            data.columns = [c.lower() for c in data.columns]
+            rename_map = {
+                'close': 'price',
+                'p_close': 'price', # 有時候叫做 p_close
+                'index_id': 'stock_id', # API 回傳的其實是 index_id
+            }
+            data = data.rename(columns=rename_map)
+
             # 根據 FinMind API 文檔，回傳欄位為：price, stock_id, date
             required_columns = ['date', 'stock_id', 'price']
             if not all(col in data.columns for col in required_columns):
-                logger.error("數據缺少必要欄位")
+                logger.error(f"數據缺少必要欄位，現有欄位: {list(data.columns)}")
                 return 0
             
             # 只保留需要的欄位
