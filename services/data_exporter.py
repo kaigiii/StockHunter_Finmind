@@ -8,10 +8,9 @@ import logging
 import pandas as pd
 import os
 from datetime import datetime
-from core.database import DatabaseManager
+import core.config as config
 
 # 設置日誌
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 class DataExporter:
@@ -24,8 +23,8 @@ class DataExporter:
         """
         self.db_manager = db_manager
         
-        # 設置匯出資料夾
-        self.export_dir = "csv_exports"
+        # 設置匯出資料夾 (從 config 讀取)
+        self.export_dir = config.EXPORT_DIR
         
         # 確保匯出資料夾存在
         if not os.path.exists(self.export_dir):

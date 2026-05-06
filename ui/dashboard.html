@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StockHunter Pro | Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --accent: #6366f1;
+            --accent-light: #818cf8;
+            --bg: #09090b;
+            --card: #18181b;
+            --card-hover: #27272a;
+            --border: #27272a;
+            --text: #fafafa;
+            --text-dim: #a1a1aa;
+            --success: #10b981;
+            --error: #ef4444;
+            --glass: rgba(24, 24, 27, 0.7);
+        }
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: var(--bg);
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.15) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(16, 185, 129, 0.1) 0px, transparent 50%);
+            color: var(--text);
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .navbar {
+            backdrop-filter: blur(12px);
+            background: var(--glass);
+            border-bottom: 1px solid var(--border);
+            padding: 1rem 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .logo { font-size: 1.5rem; font-weight: 700; letter-spacing: -0.025em; color: var(--text); display: flex; align-items: center; gap: 0.5rem; }
+        .logo span { color: var(--accent); }
+        
+        .nav-actions { display: flex; gap: 1rem; align-items: center; }
+        .icon-btn { 
+            background: transparent; border: 1px solid var(--border); color: var(--text); 
+            width: 40px; height: 40px; border-radius: 0.75rem; cursor: pointer; display: flex; align-items: center; justify-content: center;
+            transition: 0.2s;
+        }
+        .icon-btn:hover { background: var(--card-hover); border-color: var(--accent); color: var(--accent); }
+
+        .container { max-width: 1200px; margin: 2rem auto; padding: 0 1.5rem; width: 100%; display: grid; grid-template-columns: 1fr 350px; gap: 2rem; }
+        
+        .card { background: var(--card); border: 1px solid var(--border); border-radius: 1rem; padding: 1.5rem; transition: all 0.3s ease; }
+        .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+        .card-title { font-size: 1.1rem; font-weight: 600; margin: 0; }
+        
+        .collector-item {
+            background: rgba(255,255,255,0.02);
+            border-radius: 0.75rem;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+            border: 1px solid transparent;
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .collector-item:hover { border-color: var(--accent); background: rgba(99, 102, 241, 0.05); }
+        .collector-item input[type="checkbox"] { 
+            accent-color: var(--accent); width: 1.2rem; height: 1.2rem; margin-top: 0.2rem; 
+        }
+        .collector-content { flex: 1; }
+        .collector-name { font-weight: 600; font-size: 0.95rem; margin-bottom: 0.25rem; display: block; }
+        .collector-meta { font-size: 0.8rem; color: var(--text-dim); display: flex; gap: 1rem; }
+        .badge-status { background: rgba(255,255,255,0.05); padding: 0.2rem 0.5rem; border-radius: 0.4rem; border: 1px solid var(--border); }
+        .badge-status.active { color: var(--success); border-color: rgba(16, 185, 129, 0.2); background: rgba(16, 185, 129, 0.05); }
+
+        .date-controls { margin-top: 1rem; display: none; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+        .date-controls.visible { display: grid; }
+        input[type="date"], input[type="text"], input[type="number"], input[type="password"] {
+            background: #000; border: 1px solid var(--border); border-radius: 0.5rem; color: #fff; padding: 0.5rem; font-size: 0.8rem; width: 100%;
+        }
+
+        .group-header { margin: 2rem 0 1rem; font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--accent); display: flex; justify-content: space-between; }
+        .group-actions { font-size: 0.75rem; cursor: pointer; color: var(--text-dim); }
+        .group-actions:hover { color: var(--accent); }
+
+        .sidebar { display: flex; flex-direction: column; gap: 1.5rem; }
+        .stats-row { display: flex; justify-content: space-between; margin-bottom: 0.5rem; font-size: 0.85rem; }
+        .stats-label { color: var(--text-dim); }
+        .stats-value { font-weight: 600; }
+
+        .btn {
+            width: 100%; padding: 0.8rem; border-radius: 0.75rem; border: none; font-weight: 600; cursor: pointer; transition: 0.2s;
+            font-family: inherit; font-size: 0.95rem;
+        }
+        .btn-primary { background: var(--accent); color: white; box-shadow: 0 10px 15px -3px rgba(99, 102, 241, 0.3); }
+        .btn-primary:hover { background: var(--accent-light); transform: translateY(-1px); }
+        .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+        .terminal {
+            background: #000; border-radius: 0.75rem; padding: 1rem; font-family: 'Fira Code', monospace; font-size: 0.75rem;
+            height: 400px; overflow-y: auto; border: 1px solid var(--border);
+        }
+        .log-line { margin-bottom: 0.25rem; line-height: 1.4; display: flex; gap: 0.75rem; }
+        .log-time { color: var(--text-dim); min-width: 60px; }
+        .log-msg.info { color: #fff; }
+        .log-msg.success { color: var(--success); }
+        .log-msg.error { color: var(--error); }
+
+        .status-indicator { display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; }
+        .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--text-dim); }
+        .dot.running { background: var(--success); box-shadow: 0 0 10px var(--success); animation: pulse 2s infinite; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
+
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(4px); display: none; justify-content: center; align-items: center; z-index: 1000;
+        }
+        .modal-overlay.visible { display: flex; }
+        .modal {
+            background: var(--card); border: 1px solid var(--border); border-radius: 1.5rem;
+            width: 500px; max-width: 90%; max-height: 90vh; overflow-y: auto; padding: 2rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+        .form-group { margin-bottom: 1.2rem; }
+        .form-group label { display: block; font-size: 0.8rem; color: var(--text-dim); margin-bottom: 0.4rem; }
+        
+        @media (max-width: 900px) { .container { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="logo">Stock<span>Hunter</span> Pro</div>
+        <div class="nav-actions">
+            <div class="status-indicator">
+                <div id="status-dot" class="dot"></div>
+                <span id="status-text">系統就緒</span>
+            </div>
+            <button class="icon-btn" onclick="openSettings()" title="系統設定">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33 1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82 1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+            </button>
+        </div>
+    </nav>
+
+    <div class="container">
+        <main>
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">數據收集器</h2>
+                    <span style="font-size: 0.8rem; color: var(--text-dim);">共 28 個模組</span>
+                </div>
+                <div id="collector-list">
+                    <!-- 動態內容 -->
+                </div>
+            </div>
+        </main>
+
+        <aside class="sidebar">
+            <div class="card">
+                <h2 class="card-title" style="margin-bottom: 1rem;">控制面板</h2>
+                <div id="sys-info">
+                    <div class="stats-row"><span class="stats-label">DB 連線</span><span class="stats-value" id="db-conn">-</span></div>
+                    <div class="stats-row"><span class="stats-label">API Tokens</span><span class="stats-value" id="token-count">-</span></div>
+                    <div class="stats-row"><span class="stats-label">Rate Limit</span><span class="stats-value" id="rate-limit">-</span></div>
+                </div>
+                
+                <div style="margin: 1.5rem 0;">
+                    <label style="font-size: 0.75rem; color: var(--text-dim); display: block; margin-bottom: 0.5rem;">全域時間區間 (選填)</label>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <input type="date" id="global-start" style="flex:1">
+                        <input type="date" id="global-end" style="flex:1">
+                    </div>
+                    <label style="display: flex; align-items: center; margin-top: 1rem; font-size: 0.8rem; cursor: pointer; color: var(--text-dim);">
+                        <input type="checkbox" id="custom-range" style="margin-right: 0.5rem; accent-color: var(--accent);"> 強制全量抓取 (1994~)
+                    </label>
+                </div>
+
+                <button id="run-btn" class="btn btn-primary">執行收集任務</button>
+            </div>
+
+            <div class="card" style="flex: 1; display: flex; flex-direction: column;">
+                <h2 class="card-title" style="margin-bottom: 1rem;">即時日誌回報</h2>
+                <div class="terminal" id="logs"></div>
+            </div>
+        </aside>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="modal-overlay" onclick="closeSettings(event)">
+        <div class="modal" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <h2 class="card-title">系統參數配置</h2>
+                <button class="icon-btn" onclick="closeSettings()" style="border:none">&times;</button>
+            </div>
+            <form id="settings-form">
+                <div class="group-header"><span>資料庫連線 (PostgreSQL)</span></div>
+                <div class="form-group">
+                    <label>Host / Port</label>
+                    <div style="display:flex; gap:0.5rem">
+                        <input type="text" id="s-db-host" placeholder="localhost">
+                        <input type="text" id="s-db-port" placeholder="5432" style="width:100px">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Database Name / User</label>
+                    <div style="display:flex; gap:0.5rem">
+                        <input type="text" id="s-db-name" placeholder="stock_hunter">
+                        <input type="text" id="s-db-user" placeholder="user">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="s-db-pass" placeholder="********">
+                </div>
+
+                <div class="group-header"><span>API 與執行設定</span></div>
+                <div class="form-group">
+                    <label>FinMind API Token</label>
+                    <input type="text" id="s-token" placeholder="貼上你的 API Token">
+                </div>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:0.5rem">
+                    <div class="form-group">
+                        <label>最大併發數 (Workers)</label>
+                        <input type="number" id="s-workers" value="5">
+                    </div>
+                    <div class="form-group">
+                        <label>API 頻率上限 (/hr)</label>
+                        <input type="number" id="s-api-limit" value="300">
+                    </div>
+                </div>
+
+                <div class="group-header"><span>系統維護設定</span></div>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:0.5rem">
+                    <div class="form-group">
+                        <label>日誌等級 (Log Level)</label>
+                        <select id="s-log-level" style="background: #000; border: 1px solid var(--border); border-radius: 0.5rem; color: #fff; padding: 0.5rem; font-size: 0.8rem; width: 100%;">
+                            <option value="DEBUG">DEBUG</option>
+                            <option value="INFO">INFO</option>
+                            <option value="WARNING">WARNING</option>
+                            <option value="ERROR">ERROR</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>預設起始日期</label>
+                        <input type="date" id="s-start-date">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>CSV 匯出目錄</label>
+                    <input type="text" id="s-export-dir" placeholder="csv_exports">
+                </div>
+
+                <button type="button" class="btn btn-primary" onclick="saveSettings()" id="save-settings-btn" style="margin-top:1rem">儲存並套用設定</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        let socket;
+        let collectorsData = {};
+
+        function connectWS() {
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            socket = new WebSocket(`${protocol}//${window.location.host}/ws`);
+
+            socket.onmessage = (e) => {
+                const msg = JSON.parse(e.data);
+                if (msg.type === 'init' || msg.type === 'status') updateUI(msg.data);
+                if (msg.type === 'log') appendLog(msg.data);
+            };
+            socket.onclose = () => setTimeout(connectWS, 3000);
+        }
+
+        function updateUI(data) {
+            const dot = document.getElementById('status-dot');
+            const text = document.getElementById('status-text');
+            const btn = document.getElementById('run-btn');
+
+            if (data.is_running) {
+                dot.className = 'dot running';
+                text.innerText = data.last_message || '正在執行任務...';
+                btn.disabled = true;
+                btn.innerText = '任務執行中...';
+            } else {
+                dot.className = 'dot';
+                text.innerText = '系統閒置';
+                btn.disabled = false;
+                btn.innerText = '執行收集任務';
+            }
+
+            if (data.history) {
+                const logEl = document.getElementById('logs');
+                logEl.innerHTML = data.history.map(l => renderLog(l)).join('');
+                logEl.scrollTop = logEl.scrollHeight;
+            }
+        }
+
+        function appendLog(log) {
+            const logEl = document.getElementById('logs');
+            logEl.innerHTML += renderLog(log);
+            logEl.scrollTop = logEl.scrollHeight;
+            document.getElementById('status-text').innerText = log.msg;
+        }
+
+        function renderLog(log) {
+            return `<div class="log-line"><span class="log-time">${log.time}</span><span class="log-msg ${log.level}">${log.msg}</span></div>`;
+        }
+
+        async function init() {
+            try {
+                const [statusRes, collRes] = await Promise.all([
+                    fetch('/api/status'),
+                    fetch('/api/v1/collectors')
+                ]);
+                const status = await statusRes.json();
+                const colls = await collRes.json();
+                
+                document.getElementById('db-conn').innerText = status.db_connected ? 'Connected' : 'Disconnected';
+                document.getElementById('db-conn').style.color = status.db_connected ? 'var(--success)' : 'var(--error)';
+                document.getElementById('token-count').innerText = `${status.token_count} (${status.token_mode})`;
+                document.getElementById('rate-limit').innerText = status.rate_limiter_status.can_call ? 'Normal' : 'Limited';
+                
+                renderCollectors(colls);
+            } catch (e) { console.error(e); }
+        }
+
+        function renderCollectors(groups) {
+            const container = document.getElementById('collector-list');
+            container.innerHTML = '';
+            
+            const groupNames = { technical: '技術指標', chip: '籌碼面', fundamental: '基本面' };
+            
+            for (const [key, items] of Object.entries(groups)) {
+                container.innerHTML += `
+                    <div class="group-header">
+                        <span>${groupNames[key]}</span>
+                        <span class="group-actions" onclick="toggleGroup('${key}')">全選 / 取消</span>
+                    </div>
+                `;
+                items.forEach(item => {
+                    const hasRange = item.range !== "無時間限制 (完整)";
+                    container.innerHTML += `
+                        <div class="collector-item" onclick="handleItemClick(event, ${item.id})">
+                            <input type="checkbox" class="cb-${key}" value="${item.id}" id="cb-${item.id}">
+                            <div class="collector-content">
+                                <span class="collector-name">${item.name}</span>
+                                <div class="collector-meta">
+                                    <span>${item.range}</span>
+                                    <span class="badge-status ${item.completed_count > 0 ? 'active' : ''}">
+                                        ${item.completed_count > 0 ? `已抓取 ${item.completed_count} 筆` : '尚未抓取'}
+                                    </span>
+                                </div>
+                                <div id="date-${item.id}" class="date-controls">
+                                    <input type="date" id="start-${item.id}" placeholder="開始" onclick="event.stopPropagation()">
+                                    <input type="date" id="end-${item.id}" placeholder="結束" onclick="event.stopPropagation()">
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+        }
+
+        function handleItemClick(e, id) {
+            if (e.target.tagName === 'INPUT') return;
+            const cb = document.getElementById(`cb-${id}`);
+            cb.checked = !cb.checked;
+            toggleDate(id, cb.checked);
+        }
+
+        function toggleDate(id, show) {
+            const el = document.getElementById(`date-${id}`);
+            if (el) el.classList.toggle('visible', show);
+        }
+
+        function toggleGroup(key) {
+            const cbs = document.querySelectorAll(`.cb-${key}`);
+            const allChecked = Array.from(cbs).every(c => c.checked);
+            cbs.forEach(c => {
+                c.checked = !allChecked;
+                toggleDate(c.value, c.checked);
+            });
+        }
+
+        document.getElementById('run-btn').onclick = async () => {
+            const selected = Array.from(document.querySelectorAll('input[type="checkbox"]:checked')).map(c => parseInt(c.value));
+            if (selected.length === 0) return alert('請選擇至少一個爬蟲');
+            const body = {
+                collector_ids: selected,
+                use_custom_range: document.getElementById('custom-range').checked,
+                start_date: document.getElementById('global-start').value || null,
+                end_date: document.getElementById('global-end').value || null
+            };
+            if (selected.length === 1) {
+                const id = selected[0];
+                const s = document.getElementById(`start-${id}`).value;
+                const e = document.getElementById(`end-${id}`).value;
+                if (s) body.start_date = s;
+                if (e) body.end_date = e;
+            }
+            const res = await fetch('/api/v1/run', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+            if (res.ok) console.log('Task started');
+            else alert('啟動失敗');
+        };
+
+        // Settings Logic
+        async function openSettings() {
+            document.getElementById('settings-modal').classList.add('visible');
+            try {
+                const res = await fetch('/api/settings');
+                const data = await res.json();
+                document.getElementById('s-db-host').value = data.db_host;
+                document.getElementById('s-db-port').value = data.db_port;
+                document.getElementById('s-db-name').value = data.db_name;
+                document.getElementById('s-db-user').value = data.db_user;
+                document.getElementById('s-db-pass').value = data.db_password;
+                document.getElementById('s-token').value = data.finmind_token;
+                document.getElementById('s-workers').value = data.max_workers;
+                document.getElementById('s-api-limit').value = data.api_max_calls;
+                document.getElementById('s-log-level').value = data.log_level;
+                document.getElementById('s-start-date').value = data.default_start_date;
+                document.getElementById('s-export-dir').value = data.export_dir;
+            } catch (e) { console.error(e); }
+        }
+
+        function closeSettings() {
+            document.getElementById('settings-modal').classList.remove('visible');
+        }
+
+        async function saveSettings() {
+            const btn = document.getElementById('save-settings-btn');
+            btn.innerText = '正在儲存...';
+            btn.disabled = true;
+
+            const body = {
+                db_host: document.getElementById('s-db-host').value,
+                db_port: document.getElementById('s-db-port').value,
+                db_name: document.getElementById('s-db-name').value,
+                db_user: document.getElementById('s-db-user').value,
+                db_password: document.getElementById('s-db-pass').value,
+                finmind_token: document.getElementById('s-token').value,
+                max_workers: parseInt(document.getElementById('s-workers').value),
+                api_max_calls: parseInt(document.getElementById('s-api-limit').value),
+                log_level: document.getElementById('s-log-level').value,
+                default_start_date: document.getElementById('s-start-date').value,
+                export_dir: document.getElementById('s-export-dir').value
+            };
+
+            try {
+                const res = await fetch('/api/settings', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+                const result = await res.json();
+                alert(result.message || '儲存成功');
+                if (res.ok) closeSettings();
+            } catch (e) { 
+                alert('儲存失敗');
+                console.error(e); 
+            } finally {
+                btn.innerText = '儲存並套用設定';
+                btn.disabled = false;
+            }
+        }
+
+        connectWS();
+        init();
+    </script>
+</body>
+</html>

@@ -94,17 +94,40 @@ FinMind API 免費版限制每小時 600 次請求。
 
 執行主程式：
 ```bash
-python3 main.py
+python3 cli_entry.py
 ```
 
-依照畫面選單操作：
-1.  輸入收集器對應的編號 (例如 `4` 代表股價)。
-2.  選擇時間範圍 (完整下載 或 自定義範圍)。
 3.  程式將自動開始下載並存入資料庫。
+
+### 2. 網頁版服務 (Web Dashboard) - 推薦使用
+
+提供更直觀的介面，支援多裝置獨立操作。
+
+執行服務：
+```bash
+python3 app_server.py
+```
+
+1.  開啟瀏覽器訪問 `http://localhost:8000` (或裝置的 IP)。
+2.  在介面中勾選您想抓取的數據表。
+3.  點擊「開始執行」即可。介面會即時顯示日誌與進度。
+4.  **特色**：您可以透過瀏覽器在任何裝置遠端監控另一台裝置的收集進度。
 
 ## 專案結構
 
-*   `core/`: 核心模組 (資料庫、控制器)
-*   `services/`: 服務層 (API 管理、匯出服務)
-*   `collectors/`: 各類數據收集器
-*   `ui/`: 使用者介面邏輯
+為了提升可維護性，專案採用了模組化架構：
+
+*   `web/`: Web 業務邏輯模組
+    *   `api/`: RESTful API 路由與設定接口
+    *   `pages/`: HTML 頁面服務路由
+*   `ui/`: 使用者介面資源
+    *   `dashboard.html`: 網頁版儀表板模板
+    *   `cli.py`: 終端機版介面邏輯
+*   `core/`: 系統核心引擎 (`CollectorEngine`) 與資料庫管理
+*   `services/`: 業務服務層
+    *   `orchestrator.py`: 任務調度與 WebSocket 廣播
+    *   `finmind_gateway.py`: API 請求封裝與多 Token 輪詢
+    *   `api_throttler.py`: API 頻率限制與節流管理
+*   `collectors/`: 具體的 28 種台股數據抓取邏輯
+*   `utils/`: 通用工具（如 `CheckpointManager` 斷點管理）
+*   `ui/`: 僅保留 CLI 相關的介面代碼

@@ -48,7 +48,7 @@ class ConsoleUI:
             print("="*80)
             
             # 使用 Controller 中的 progress_manager
-            self.controller.progress_manager.show_status()
+            self.controller.checkpoint_manager.show_status()
             
         except Exception as e:
             print(f"[Error] 顯示收集器狀態失敗: {e}")
@@ -119,7 +119,7 @@ class ConsoleUI:
         
         # 先顯示當前狀態
         print("當前進度狀態:")
-        self.controller.progress_manager.show_status()
+        self.controller.checkpoint_manager.show_status()
         
         print("\n" + "="*50)
         print("請選擇重置選項:")

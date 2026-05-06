@@ -1,7 +1,7 @@
 import logging
 import os
 from datetime import datetime
-from services.api import get_finmind_api
+from services.finmind_gateway import get_finmind_api
 from core.database import DatabaseManager
 import core.config as config
 
@@ -123,15 +123,12 @@ class BaseStockListCollector:
         token_count = len(config.FINMIND_API_TOKENS)
         
         # 優先讀取環境變數設定的 Workers 數量
-        env_max_workers = os.getenv('MAX_WORKERS')
-        if env_max_workers and env_max_workers.isdigit():
-            max_workers = int(env_max_workers)
-        else:
-            # 預設每顆 Token 配 3 個 Worker，預設上限 10
-            # 如果單一 Token 想加速，可透過 .env 設定 MAX_WORKERS=5~10
-            max_workers = min(token_count * 3, 10)
-            # 確保至少有 1 個 Worker
-            max_workers = max(1, max_workers)
+        max_workers = config.MAX_WORKERS
+        
+        # 根據 Token 數量決定併發數 (如果沒有手動指定的話)
+        if max_workers == 5: # 預設值
+            token_count = len(config.FINMIND_API_TOKENS)
+            max_workers = max(1, min(token_count * 3, 10))
         
         print(f"[啟動併發模式]: {max_workers} Workers (Tokens: {token_count})")
         

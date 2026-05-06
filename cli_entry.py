@@ -11,7 +11,7 @@ import time
 from dotenv import load_dotenv
 
 import core.config as config
-from core.controller import DataController
+from core.collector_engine import CollectorEngine
 from ui.cli import ConsoleUI
 
 # 載入環境變數
@@ -44,7 +44,7 @@ def setup_system(controller):
     """系統初始化設置"""
     try:
         # 這裡可以通過 controller 調用 db_manager 初始化
-        # 目前 DataController 初始化時已經初始化了 DB Manager
+        # 目前 CollectorEngine 初始化時已經初始化了 DB Manager
         
         # 檢查資料表
         # TODO: 將 check_tables_exist 邏輯移入 controller
@@ -81,9 +81,9 @@ def main():
     if not check_dependencies():
         sys.exit(1)
     
-    # 2. 初始化控制器 (Core Logic)
+    # 2. 初始化引擎 (Core Logic)
     logger.info("正在初始化系統核心...")
-    controller = DataController()
+    controller = CollectorEngine()
     
     # 3. 初始化 UI (View)
     ui = ConsoleUI(controller)
@@ -121,14 +121,19 @@ def main():
                 if use_custom_range is not None:
                     print(f"\n🚀 開始執行 {len(choice)} 個收集任務...")
                     
-                    # 委派給 Controller 執行，並傳入回調函數處理即時 UI 顯示
+                    # 委派給 Controller 執行
                     # 注意: Generator 需要迭代才能執行
-                    for msgs in controller.run_collectors(choice, use_custom_range, ui_callback_handler):
-                         if isinstance(msgs, dict) and msgs.get('type') == 'wait':
-                             # 處理等待邏輯
-                             wait_sec = msgs['seconds']
-                             print(f"⏳ {msgs['msg']}")
-                             time.sleep(wait_sec)
+                    for msgs in controller.run_collectors(choice, use_custom_range):
+                         if isinstance(msgs, dict):
+                             m_type = msgs.get('type')
+                             m_msg = msgs.get('msg', '')
+                             if m_type == 'wait':
+                                 print(f"⏳ {m_msg}")
+                                 # Controller 內部已經 handle 了 sleep
+                             elif m_type == 'log':
+                                 ui_callback_handler(m_msg, msgs.get('level', 'info'))
+                             elif m_type == 'summary':
+                                 ui_callback_handler(m_msg, 'success')
 
                     print("\n🎉 所有任務執行完畢！")
             

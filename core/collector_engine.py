@@ -9,14 +9,14 @@ import core.config as config
 from core.database import DatabaseManager
 from services.exporter import DataExporter
 from services.rate_limiter import APIRateLimiter
-from utils.progress import CollectorProgressManager
+from utils.checkpoint_manager import CheckpointManager
 
 load_dotenv('.env')
 logger = logging.getLogger(__name__)
 
-class DataController:
+class CollectorEngine:
     """
-    通用數據控制器
+    通用數據收集引擎
     負責協調數據收集、匯出、資料庫管理等核心業務邏輯
     與具體的使用者介面（CLI/Web）解耦
     """
@@ -24,15 +24,16 @@ class DataController:
     def __init__(self):
         self.db_manager = DatabaseManager()
         self.rate_limiter = APIRateLimiter()
-        self.progress_manager = CollectorProgressManager()
+        self.checkpoint_manager = CheckpointManager()
         self.exporter = DataExporter(self.db_manager)
         
     def get_system_status(self):
         """獲取系統狀態摘要"""
         token_count = len(config.FINMIND_API_TOKENS)
-        db_connected = self.db_manager.get_connection() is not None
+        conn = self.db_manager.get_connection()
+        db_connected = conn is not None
         if db_connected:
-            self.db_manager.return_connection(self.db_manager.get_connection())
+            self.db_manager.return_connection(conn)
             
         return {
             "token_count": token_count,
@@ -45,12 +46,10 @@ class DataController:
         }
 
     def get_available_collectors(self):
-        """獲取所有可用的收集器列表及其分類"""
-        # 這裡可以從 config 或常量中獲取，暫時硬編碼，實際上可以讀取 config
-        # 為了簡化，直接返回結構化數據
+        """獲取所有可用的收集器及其詳細狀態"""
         today = datetime.now().strftime('%Y-%m-%d')
         
-        return {
+        groups = {
             "technical": [
                 {"id": 1, "name": "台股總覽", "range": "無時間限制 (完整)"},
                 {"id": 2, "name": "台股總覽(含權證)", "range": "無時間限制 (完整)"},
@@ -87,6 +86,21 @@ class DataController:
             ]
         }
 
+        # 獲取所有收集器的狀態摘要
+        status_map = self.checkpoint_manager.get_all_collectors_status()
+        collector_mapping = self._get_collector_mapping()
+        
+        for g in groups:
+            for item in groups[g]:
+                module_path = collector_mapping.get(item['id'])
+                if module_path:
+                    name = module_path.split('.')[-1]
+                    item_status = status_map.get(name, {"count": 0, "last_update": "從未執行"})
+                    item['last_update'] = item_status['last_update']
+                    item['completed_count'] = item_status['count']
+        
+        return groups
+
     def _get_collector_mapping(self):
         """內部方法: 獲取編號到模組的映射"""
         return {
@@ -120,15 +134,11 @@ class DataController:
             28: 'collectors.fundamental.taiwan_stock_par_value_change'
         }
 
-    def run_collectors(self, collector_ids, use_custom_range=False, ui_callback=None):
+    def run_collectors(self, collector_ids, use_custom_range=False, start_date=None, end_date=None):
         """
-        執行多個收集器
-        Args:
-            collector_ids: 收集器 ID 列表
-            use_custom_range: 是否使用自定義時間範圍
-            ui_callback: 可選的 UI 回調函數，用於顯示訊息 (message, level)
+        執行多個收集器任務 (Generator 模式)
         Yields:
-            進度訊息或執行結果
+            dict: 包含 type, msg, level 等資訊的消息
         """
         collector_mapping = self._get_collector_mapping()
         success_count = 0
@@ -136,57 +146,66 @@ class DataController:
         
         for i, choice in enumerate(collector_ids, 1):
             if choice not in collector_mapping:
-                if ui_callback: ui_callback(f"無效的收集器編號: {choice}", "error")
+                msg = f"無效的收集器編號: {choice}"
+                yield {"type": "log", "msg": msg, "level": "error"}
                 continue
             
             full_module_name = collector_mapping[choice]
             module_basename = full_module_name.split('.')[-1]
             
-            if ui_callback: ui_callback(f"🎯 執行收集器 {i}/{total_count}: {module_basename}", "info")
-            
             try:
-                # 檢查 API 限制
+                # 1. 檢查 API 限制 (修復：找回被刪除的檢查邏輯)
                 if not self.rate_limiter.can_call():
                     next_time = self.rate_limiter.get_next_available_time()
                     wait_seconds = (next_time - datetime.now()).total_seconds()
                     if wait_seconds > 0:
-                        yield {"type": "wait", "seconds": wait_seconds, "msg": f"API 調用限制，需等待 {int(wait_seconds)} 秒"}
-                        # 在 CLI 層處理是否等待，Controller 只是通知需要等待
-                        # 簡單起見，這裡我們假設自動等待，或者由調用者決定
+                        wait_msg = f"API 頻率限制中，需等待 {int(wait_seconds)} 秒..."
+                        yield {"type": "log", "msg": wait_msg, "level": "info"}
+                        yield {"type": "wait", "seconds": wait_seconds, "msg": wait_msg}
+                        # 在控制器層進行實際等待，確保安全
+                        time.sleep(wait_seconds + 1)
+
+                # 2. 動態導入與實例化
+                module = importlib.import_module(full_module_name)
+                class_name = "".join(word.capitalize() for word in module_basename.split("_")) + "Collector"
                 
-                # 動態導入
-                collector_module = importlib.import_module(full_module_name)
-                collector_class_name = ''.join(word.capitalize() for word in module_basename.split('_')) + 'Collector'
+                if not hasattr(module, class_name):
+                    yield {"type": "log", "msg": f"找不到類別 {class_name}", "level": "error"}
+                    continue
+                    
+                collector_class = getattr(module, class_name)
+                collector_instance = collector_class()
                 
-                if hasattr(collector_module, collector_class_name):
-                    collector_class = getattr(collector_module, collector_class_name)
-                    collector_instance = collector_class()
-                    
-                    # 執行收集
-                    collector_instance.main(
-                        use_custom_range=use_custom_range,
-                        rate_limiter=self.rate_limiter,
-                        progress_manager=self.progress_manager
-                    )
-                    success_count += 1
-                    if ui_callback: ui_callback(f"{module_basename} 執行完成", "success")
-                else:
-                    if ui_callback: ui_callback(f"找不到收集器類別: {collector_class_name}", "error")
-                    
+                collector_name = getattr(collector_instance, 'collector_name', module_basename)
+                yield {"type": "log", "msg": f"[{i}/{total_count}] 正在啟動: {collector_name}", "level": "info"}
+                
+                # 3. 執行收集
+                # 注意：這裡我們假設 collector.main 是同步執行的
+                collector_instance.main(
+                    start_date=start_date,
+                    end_date=end_date,
+                    use_custom_range=use_custom_range,
+                    rate_limiter=self.rate_limiter,
+                    progress_manager=self.checkpoint_manager
+                )
+                
+                success_count += 1
+                yield {"type": "log", "msg": f"✅ {collector_name} 執行完成", "level": "success"}
+                
             except Exception as e:
-                error_msg = str(e)
-                if ui_callback: ui_callback(f"{module_basename} 執行失敗: {error_msg}", "error")
-                
-                # API 限制處理暫時簡化，主要依靠 RateLimiter 內部機制
+                error_msg = f"❌ {module_basename} 發生錯誤: {str(e)}"
+                logger.error(error_msg)
+                yield {"type": "log", "msg": error_msg, "level": "error"}
         
-        return success_count, total_count
+        final_msg = f"任務結束: 成功 {success_count} / 總數 {total_count}"
+        yield {"type": "summary", "msg": final_msg, "success": success_count, "total": total_count}
 
     def reset_progress(self, collector_name=None):
         """重置進度"""
         if collector_name:
-            self.progress_manager.reset_collector(collector_name)
+            self.checkpoint_manager.reset_collector(collector_name)
         else:
-            self.progress_manager.reset_all_progress()
+            self.checkpoint_manager.reset_all_progress()
 
     def drop_all_tables(self):
         """刪除並重建所有表格"""

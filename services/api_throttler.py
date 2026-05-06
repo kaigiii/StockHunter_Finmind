@@ -13,10 +13,10 @@ logger = logging.getLogger(__name__)
 import threading
 import core.config as config
 
-class APIRateLimiter:
+class APIThrottler:
     """API 調用限制器 (Thread-Safe & Scalable)"""
     def __init__(self, max_calls_per_hour=None):
-        base_limit = max_calls_per_hour or int(os.getenv('API_MAX_CALLS_PER_HOUR', 300))
+        base_limit = max_calls_per_hour or config.API_MAX_CALLS_PER_HOUR
         # 根據 Token 數量擴展上限
         token_count = len(config.FINMIND_API_TOKENS)
         self.max_calls_per_hour = base_limit * (token_count if token_count > 0 else 1)
@@ -33,7 +33,7 @@ class APIRateLimiter:
             now = datetime.now()
             # 清除時間窗口外的記錄
             self.call_history = [call_time for call_time in self.call_history 
-                               if (now - call_time).total_seconds() < int(os.getenv('API_TIME_WINDOW_SECONDS', 3600))]
+                               if (now - call_time).total_seconds() < config.API_TIME_WINDOW]
             return len(self.call_history) < self.max_calls_per_hour
     
     def record_call(self, count=1):
@@ -47,7 +47,7 @@ class APIRateLimiter:
         with self._lock:
             now = datetime.now()
             self.call_history = [call_time for call_time in self.call_history 
-                               if (now - call_time).total_seconds() < int(os.getenv('API_TIME_WINDOW_SECONDS', 3600))]
+                               if (now - call_time).total_seconds() < config.API_TIME_WINDOW]
             return self.max_calls_per_hour - len(self.call_history)
     
     def get_next_available_time(self):
@@ -56,7 +56,7 @@ class APIRateLimiter:
             if len(self.call_history) < self.max_calls_per_hour:
                 return datetime.now()
             oldest_call = min(self.call_history)
-            return oldest_call + timedelta(seconds=int(os.getenv('API_TIME_WINDOW_SECONDS', 3600)))
+            return oldest_call + timedelta(seconds=config.API_TIME_WINDOW)
     
     def detect_api_limit_error(self, error_message):
         """檢測是否是 API 限制錯誤"""
