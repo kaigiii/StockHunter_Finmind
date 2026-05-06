@@ -2,6 +2,7 @@ import asyncio
 import logging
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from dotenv import load_dotenv
+import core.config as config
 
 from core.collector_engine import CollectorEngine
 from services.orchestrator import Orchestrator, ConnectionManager

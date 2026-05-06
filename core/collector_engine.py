@@ -7,8 +7,8 @@ from dotenv import load_dotenv
 
 import core.config as config
 from core.database import DatabaseManager
-from services.exporter import DataExporter
-from services.rate_limiter import APIRateLimiter
+from services.data_exporter import DataExporter
+from services.api_throttler import APIThrottler
 from utils.checkpoint_manager import CheckpointManager
 
 load_dotenv('.env')
@@ -23,7 +23,7 @@ class CollectorEngine:
     
     def __init__(self):
         self.db_manager = DatabaseManager()
-        self.rate_limiter = APIRateLimiter()
+        self.rate_limiter = APIThrottler()
         self.checkpoint_manager = CheckpointManager()
         self.exporter = DataExporter(self.db_manager)
         
