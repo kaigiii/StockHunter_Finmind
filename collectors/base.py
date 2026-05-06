@@ -32,9 +32,9 @@ class BaseStockListCollector:
         raise NotImplementedError("子類別必須實現 _save_data 方法")
         
     def _get_start_date(self, use_custom_range: bool, start_date: str = None) -> str:
-        """從設定檔獲取開始日期"""
-        if use_custom_range:
-            return config.DEFAULT_START_DATE
+        """獲取開始日期：優先順序為 手動指定 > 環境變數 > 系統預設"""
+        if use_custom_range and start_date:
+            return start_date
         
         env_key = f"{self.collector_name.upper()}_START_DATE"
         return os.getenv(env_key, config.DEFAULT_START_DATE)
@@ -87,7 +87,7 @@ class BaseStockListCollector:
         
         # 1. 決定時間範圍
         effective_start_date = self._get_start_date(use_custom_range, start_date)
-        effective_end_date = os.getenv('DEFAULT_END_DATE', datetime.now().strftime('%Y-%m-%d')) if use_custom_range else datetime.now().strftime('%Y-%m-%d')
+        effective_end_date = end_date if (use_custom_range and end_date) else datetime.now().strftime('%Y-%m-%d')
         
         # 2. 獲取股票列表
         if not stock_list:
@@ -238,8 +238,8 @@ class BaseDateListCollector:
         
         # 決定時間範圍
         if use_custom_range:
-            effective_start_date = os.getenv('DEFAULT_START_DATE', '2020-01-01')
-            effective_end_date = os.getenv('DEFAULT_END_DATE', datetime.now().strftime('%Y-%m-%d'))
+            effective_start_date = start_date or config.DEFAULT_START_DATE
+            effective_end_date = end_date or datetime.now().strftime('%Y-%m-%d')
         else:
             # 根據收集器名稱映射到正確的環境變數名稱
             env_mapping = {
@@ -252,7 +252,7 @@ class BaseDateListCollector:
             if env_start_date == 'all_time':
                 effective_start_date = '1990-01-01'
             else:
-                effective_start_date = env_start_date or os.getenv('DEFAULT_START_DATE', '2020-01-01')
+                effective_start_date = env_start_date or config.DEFAULT_START_DATE
             
             effective_end_date = datetime.now().strftime('%Y-%m-%d')
         
@@ -363,8 +363,8 @@ class BaseDateRangeCollector(BaseOneShotCollector):
         
         # 決定時間範圍
         if use_custom_range:
-            start_date = config.DEFAULT_START_DATE
-            end_date = os.getenv('DEFAULT_END_DATE', datetime.now().strftime('%Y-%m-%d'))
+            start_date = kwargs.get('start_date') or config.DEFAULT_START_DATE
+            end_date = kwargs.get('end_date') or datetime.now().strftime('%Y-%m-%d')
         else:
             env_key = f"{self.collector_name.upper()}_START_DATE"
             start_date = os.getenv(env_key, '1990-01-01')

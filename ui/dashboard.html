@@ -7,25 +7,27 @@
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --accent: #6366f1;
-            --accent-light: #818cf8;
-            --bg: #09090b;
-            --card: #18181b;
-            --card-hover: #27272a;
-            --border: #27272a;
-            --text: #fafafa;
-            --text-dim: #a1a1aa;
-            --success: #10b981;
+            --accent: #c5a059; /* 香檳金 */
+            --accent-light: #dfbd7d;
+            --accent-dark: #a6823d;
+            --bg: #050505; /* 曜石黑 */
+            --card: #121212;
+            --card-hover: #1c1c1c;
+            --border: #262626;
+            --border-gold: rgba(197, 160, 89, 0.2);
+            --text: #f5f5f5;
+            --text-dim: #a3a3a3;
+            --success: #c5a059; /* 成功狀態也統一為金色系 */
             --error: #ef4444;
-            --glass: rgba(24, 24, 27, 0.7);
+            --glass: rgba(10, 10, 10, 0.8);
         }
         * { box-sizing: border-box; }
         body {
             font-family: 'Outfit', sans-serif;
             background: var(--bg);
             background-image: 
-                radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.15) 0px, transparent 50%),
-                radial-gradient(at 100% 100%, rgba(16, 185, 129, 0.1) 0px, transparent 50%);
+                radial-gradient(at 0% 0%, rgba(197, 160, 89, 0.08) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(166, 130, 61, 0.05) 0px, transparent 50%);
             color: var(--text);
             margin: 0;
             min-height: 100vh;
@@ -35,7 +37,7 @@
         .navbar {
             backdrop-filter: blur(12px);
             background: var(--glass);
-            border-bottom: 1px solid var(--border);
+            border-bottom: 1px solid var(--border-gold);
             padding: 1rem 2rem;
             position: sticky;
             top: 0;
@@ -44,82 +46,187 @@
             justify-content: space-between;
             align-items: center;
         }
-        .logo { font-size: 1.5rem; font-weight: 700; letter-spacing: -0.025em; color: var(--text); display: flex; align-items: center; gap: 0.5rem; }
-        .logo span { color: var(--accent); }
+        .logo { font-size: 1.5rem; font-weight: 700; letter-spacing: 0.05em; color: var(--text); text-transform: uppercase; }
+        .logo span { color: var(--accent); text-shadow: 0 0 15px rgba(197, 160, 89, 0.4); }
         
         .nav-actions { display: flex; gap: 1rem; align-items: center; }
         .icon-btn { 
             background: transparent; border: 1px solid var(--border); color: var(--text); 
-            width: 40px; height: 40px; border-radius: 0.75rem; cursor: pointer; display: flex; align-items: center; justify-content: center;
-            transition: 0.2s;
+            width: 40px; height: 40px; border-radius: 0.5rem; cursor: pointer; display: flex; align-items: center; justify-content: center;
+            transition: 0.3s;
         }
-        .icon-btn:hover { background: var(--card-hover); border-color: var(--accent); color: var(--accent); }
+        .icon-btn:hover { border-color: var(--accent); color: var(--accent); background: rgba(197, 160, 89, 0.05); }
 
-        .container { max-width: 1200px; margin: 2rem auto; padding: 0 1.5rem; width: 100%; display: grid; grid-template-columns: 1fr 350px; gap: 2rem; }
+        .container { 
+            max-width: 1300px; 
+            margin: 2rem auto; 
+            padding: 0 1.5rem; 
+            width: 100%; 
+            display: grid; 
+            grid-template-columns: 1fr 380px; 
+            gap: 2rem; 
+            align-items: flex-start; 
+        }
         
-        .card { background: var(--card); border: 1px solid var(--border); border-radius: 1rem; padding: 1.5rem; transition: all 0.3s ease; }
-        .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
-        .card-title { font-size: 1.1rem; font-weight: 600; margin: 0; }
+        .card { 
+            background: var(--card); 
+            border: 1px solid var(--border); 
+            border-radius: 0.75rem; 
+            padding: 1.5rem; 
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+        }
+        .card:hover { border-color: var(--border-gold); }
+        .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; border-left: 3px solid var(--accent); padding-left: 1rem; }
+        .card-title { font-size: 1rem; font-weight: 700; margin: 0; text-transform: uppercase; letter-spacing: 0.05em; color: var(--accent); }
         
         .collector-item {
-            background: rgba(255,255,255,0.02);
-            border-radius: 0.75rem;
+            background: rgba(255,255,255,0.01);
+            border-radius: 0.5rem;
             padding: 1rem;
             margin-bottom: 0.75rem;
-            border: 1px solid transparent;
+            border: 1px solid var(--border);
             display: flex;
-            align-items: flex-start;
+            align-items: center;
             gap: 1rem;
-            cursor: pointer;
-            transition: 0.2s;
+            transition: 0.3s;
         }
-        .collector-item:hover { border-color: var(--accent); background: rgba(99, 102, 241, 0.05); }
+        .collector-item:hover { border-color: var(--accent-dark); background: rgba(197, 160, 89, 0.03); }
         .collector-item input[type="checkbox"] { 
-            accent-color: var(--accent); width: 1.2rem; height: 1.2rem; margin-top: 0.2rem; 
+            accent-color: var(--accent); width: 1.1rem; height: 1.1rem; cursor: pointer;
         }
-        .collector-content { flex: 1; }
-        .collector-name { font-weight: 600; font-size: 0.95rem; margin-bottom: 0.25rem; display: block; }
-        .collector-meta { font-size: 0.8rem; color: var(--text-dim); display: flex; gap: 1rem; }
-        .badge-status { background: rgba(255,255,255,0.05); padding: 0.2rem 0.5rem; border-radius: 0.4rem; border: 1px solid var(--border); }
-        .badge-status.active { color: var(--success); border-color: rgba(16, 185, 129, 0.2); background: rgba(16, 185, 129, 0.05); }
+        .collector-content { 
+            flex: 1; 
+            cursor: pointer; 
+            display: flex; 
+            align-items: center; 
+            gap: 1.5rem; 
+        }
+        .collector-name { 
+            font-weight: 600; 
+            font-size: 0.9rem; 
+            color: #eee; 
+            min-width: 160px; /* 固定最小寬度確保整齊 */
+            white-space: nowrap;
+        }
+        .collector-meta { 
+            font-size: 0.7rem; 
+            color: var(--text-dim); 
+            display: flex; 
+            gap: 1.5rem; 
+            align-items: center; 
+            flex: 1;
+        }
+        .badge-status { 
+            background: rgba(197, 160, 89, 0.05); 
+            padding: 0.15rem 0.4rem; 
+            border-radius: 0.25rem; 
+            border: 1px solid var(--border-gold); 
+            font-size: 0.65rem; 
+            color: var(--accent); 
+        }
+        .badge-status.active { color: #fff; background: var(--accent-dark); border-color: var(--accent); }
 
-        .date-controls { margin-top: 1rem; display: none; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
-        .date-controls.visible { display: grid; }
-        input[type="date"], input[type="text"], input[type="number"], input[type="password"] {
-            background: #000; border: 1px solid var(--border); border-radius: 0.5rem; color: #fff; padding: 0.5rem; font-size: 0.8rem; width: 100%;
+        .date-controls { 
+            display: flex; 
+            align-items: center; 
+            gap: 0.4rem; 
+            margin-left: auto;
+            background: rgba(255,255,255,0.03);
+            padding: 0.2rem 0.6rem;
+            border-radius: 0.4rem;
+            border: 1px solid transparent;
+            transition: 0.3s;
+        }
+        .date-controls:hover { border-color: var(--border-gold); background: rgba(255,255,255,0.05); }
+        .date-controls span { font-size: 0.65rem; color: var(--text-dim); }
+        
+        .date-controls input[type="date"] {
+            background: transparent; 
+            border: none; 
+            border-bottom: 1px solid var(--border); 
+            border-radius: 0;
+            color: var(--accent); 
+            padding: 0; 
+            font-size: 0.7rem; 
+            width: 95px;
+            cursor: pointer;
+        }
+        .date-controls input[type="date"]:focus { border-color: var(--accent); outline: none; }
+        /* 隱藏日期選擇器的預設圖示，讓它更像文字 */
+        .date-controls input[type="date"]::-webkit-calendar-picker-indicator {
+            filter: invert(0.6) sepia(1) saturate(5) hue-rotate(10deg);
+            cursor: pointer;
+            width: 10px;
+        }
+        .reset-link {
+            opacity: 0.4;
+            font-size: 0.6rem;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .reset-link:hover {
+            opacity: 1;
+            color: var(--accent);
+            text-decoration: underline;
         }
 
-        .group-header { margin: 2rem 0 1rem; font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--accent); display: flex; justify-content: space-between; }
-        .group-actions { font-size: 0.75rem; cursor: pointer; color: var(--text-dim); }
+        .run-single-btn {
+            background: transparent; border: 1px solid var(--border); color: var(--text-dim);
+            width: 30px; height: 30px; border-radius: 0.4rem; display: flex; align-items: center; justify-content: center;
+            cursor: pointer; transition: 0.3s;
+        }
+        .run-single-btn:hover { border-color: var(--accent); color: var(--accent); transform: scale(1.05); box-shadow: 0 0 10px rgba(197, 160, 89, 0.2); }
+        .run-single-btn svg { width: 12px; height: 12px; }
+
+        input[type="text"], input[type="number"], input[type="password"], select {
+            background: #000; border: 1px solid var(--border); border-radius: 0.4rem; color: #fff; padding: 0.5rem; font-size: 0.75rem; width: 100%;
+            transition: 0.3s;
+        }
+        input:focus, select:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 5px rgba(197, 160, 89, 0.2); }
+
+        .group-header { margin: 2rem 0 0.75rem; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.15em; color: var(--accent-dark); display: flex; justify-content: space-between; border-bottom: 1px solid var(--border); padding-bottom: 0.3rem; }
+        .group-actions { font-size: 0.65rem; cursor: pointer; color: var(--text-dim); }
         .group-actions:hover { color: var(--accent); }
 
-        .sidebar { display: flex; flex-direction: column; gap: 1.5rem; }
-        .stats-row { display: flex; justify-content: space-between; margin-bottom: 0.5rem; font-size: 0.85rem; }
+        .sidebar { 
+            display: flex; 
+            flex-direction: column; 
+            gap: 1.5rem; 
+            position: sticky; 
+            top: 6rem;
+            max-height: calc(100vh - 8rem);
+        }
+        .stats-row { display: flex; justify-content: space-between; margin-bottom: 0.6rem; font-size: 0.8rem; border-bottom: 1px dashed var(--border); padding-bottom: 0.4rem; }
         .stats-label { color: var(--text-dim); }
-        .stats-value { font-weight: 600; }
+        .stats-value { font-weight: 700; color: var(--accent); }
 
         .btn {
-            width: 100%; padding: 0.8rem; border-radius: 0.75rem; border: none; font-weight: 600; cursor: pointer; transition: 0.2s;
-            font-family: inherit; font-size: 0.95rem;
+            width: 100%; padding: 0.9rem; border-radius: 0.5rem; border: none; font-weight: 700; cursor: pointer; transition: 0.3s;
+            font-family: inherit; font-size: 0.9rem; display: flex; align-items: center; justify-content: center; gap: 0.6rem;
+            text-transform: uppercase; letter-spacing: 0.05em;
         }
-        .btn-primary { background: var(--accent); color: white; box-shadow: 0 10px 15px -3px rgba(99, 102, 241, 0.3); }
-        .btn-primary:hover { background: var(--accent-light); transform: translateY(-1px); }
-        .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+        .btn-primary { 
+            background: linear-gradient(135deg, var(--accent), var(--accent-dark)); 
+            color: #000; 
+            box-shadow: 0 4px 15px rgba(197, 160, 89, 0.2); 
+        }
+        .btn-primary:hover { 
+            background: linear-gradient(135deg, var(--accent-light), var(--accent)); 
+            transform: translateY(-2px); 
+            box-shadow: 0 6px 20px rgba(197, 160, 89, 0.3);
+        }
+        .btn-primary:disabled { background: #333; color: #666; cursor: not-allowed; transform: none; box-shadow: none; }
 
         .terminal {
             background: #000; border-radius: 0.75rem; padding: 1rem; font-family: 'Fira Code', monospace; font-size: 0.75rem;
-            height: 400px; overflow-y: auto; border: 1px solid var(--border);
+            flex: 1; overflow-y: auto; border: 1px solid var(--border); min-height: 300px;
         }
         .log-line { margin-bottom: 0.25rem; line-height: 1.4; display: flex; gap: 0.75rem; }
         .log-time { color: var(--text-dim); min-width: 60px; }
         .log-msg.info { color: #fff; }
         .log-msg.success { color: var(--success); }
         .log-msg.error { color: var(--error); }
-
-        .status-indicator { display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; }
-        .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--text-dim); }
-        .dot.running { background: var(--success); box-shadow: 0 0 10px var(--success); animation: pulse 2s infinite; }
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
 
         /* Modal Styles */
         .modal-overlay {
@@ -143,10 +250,6 @@
     <nav class="navbar">
         <div class="logo">Stock<span>Hunter</span> Pro</div>
         <div class="nav-actions">
-            <div class="status-indicator">
-                <div id="status-dot" class="dot"></div>
-                <span id="status-text">系統就緒</span>
-            </div>
             <button class="icon-btn" onclick="openSettings()" title="系統設定">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33 1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82 1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
             </button>
@@ -157,8 +260,11 @@
         <main>
             <div class="card">
                 <div class="card-header">
-                    <h2 class="card-title">數據收集器</h2>
-                    <span style="font-size: 0.8rem; color: var(--text-dim);">共 28 個模組</span>
+                    <h2 class="card-title">數據收集控制中心</h2>
+                    <div style="display: flex; align-items: center; gap: 1rem;">
+                        <span class="reset-link" onclick="resetAllDates()" style="font-size: 0.75rem;">全部恢復預設</span>
+                        <span id="module-count" style="font-size: 0.8rem; color: var(--text-dim);">載入中...</span>
+                    </div>
                 </div>
                 <div id="collector-list">
                     <!-- 動態內容 -->
@@ -168,15 +274,14 @@
 
         <aside class="sidebar">
             <div class="card">
-                <h2 class="card-title" style="margin-bottom: 1rem;">控制面板</h2>
+                <h2 class="card-title" style="margin-bottom: 1rem;">全域控制</h2>
                 <div id="sys-info">
-                    <div class="stats-row"><span class="stats-label">DB 連線</span><span class="stats-value" id="db-conn">-</span></div>
-                    <div class="stats-row"><span class="stats-label">API Tokens</span><span class="stats-value" id="token-count">-</span></div>
-                    <div class="stats-row"><span class="stats-label">Rate Limit</span><span class="stats-value" id="rate-limit">-</span></div>
+                    <div class="stats-row"><span class="stats-label">資料庫連線</span><span class="stats-value" id="db-conn">-</span></div>
+                    <div class="stats-row"><span class="stats-label">API 憑證</span><span class="stats-value" id="token-count">-</span></div>
                 </div>
                 
                 <div style="margin: 1.5rem 0;">
-                    <label style="font-size: 0.75rem; color: var(--text-dim); display: block; margin-bottom: 0.5rem;">全域時間區間 (選填)</label>
+                    <label style="font-size: 0.75rem; color: var(--text-dim); display: block; margin-bottom: 0.5rem;">全域時間區間 (自定義)</label>
                     <div style="display: flex; gap: 0.5rem;">
                         <input type="date" id="global-start" style="flex:1">
                         <input type="date" id="global-end" style="flex:1">
@@ -186,11 +291,14 @@
                     </label>
                 </div>
 
-                <button id="run-btn" class="btn btn-primary">執行收集任務</button>
+                <button id="run-btn" class="btn btn-primary">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"></polyline><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
+                    執行已勾選項目
+                </button>
             </div>
 
             <div class="card" style="flex: 1; display: flex; flex-direction: column;">
-                <h2 class="card-title" style="margin-bottom: 1rem;">即時日誌回報</h2>
+                <h2 class="card-title" style="margin-bottom: 1rem;">系統回報日誌</h2>
                 <div class="terminal" id="logs"></div>
             </div>
         </aside>
@@ -200,7 +308,7 @@
     <div id="settings-modal" class="modal-overlay" onclick="closeSettings(event)">
         <div class="modal" onclick="event.stopPropagation()">
             <div class="modal-header">
-                <h2 class="card-title">系統參數配置</h2>
+                <h2 class="card-title">系統進階設定</h2>
                 <button class="icon-btn" onclick="closeSettings()" style="border:none">&times;</button>
             </div>
             <form id="settings-form">
@@ -239,8 +347,28 @@
                         <input type="number" id="s-api-limit" value="300">
                     </div>
                 </div>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:0.5rem">
+                    <div class="form-group">
+                        <label>402 限制冷卻 (秒)</label>
+                        <input type="number" id="s-api-wait-402" value="600">
+                    </div>
+                    <div class="form-group">
+                        <label>一般錯誤重試 (秒)</label>
+                        <input type="number" id="s-api-retry" value="5">
+                    </div>
+                </div>
 
-                <div class="group-header"><span>系統維護設定</span></div>
+                <div class="group-header"><span>進階連線與維護設定</span></div>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:0.5rem">
+                    <div class="form-group">
+                        <label>DB 連線池最小</label>
+                        <input type="number" id="s-db-pool-min" value="1">
+                    </div>
+                    <div class="form-group">
+                        <label>DB 連線池最大</label>
+                        <input type="number" id="s-db-pool-max" value="20">
+                    </div>
+                </div>
                 <div style="display:grid; grid-template-columns: 1fr 1fr; gap:0.5rem">
                     <div class="form-group">
                         <label>日誌等級 (Log Level)</label>
@@ -268,7 +396,7 @@
 
     <script>
         let socket;
-        let collectorsData = {};
+        let isSystemRunning = false;
 
         function connectWS() {
             const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
@@ -276,27 +404,31 @@
 
             socket.onmessage = (e) => {
                 const msg = JSON.parse(e.data);
-                if (msg.type === 'init' || msg.type === 'status') updateUI(msg.data);
+                if (msg.type === 'init' || msg.type === 'status') updateUIStatus(msg.data);
                 if (msg.type === 'log') appendLog(msg.data);
             };
             socket.onclose = () => setTimeout(connectWS, 3000);
         }
 
-        function updateUI(data) {
-            const dot = document.getElementById('status-dot');
-            const text = document.getElementById('status-text');
-            const btn = document.getElementById('run-btn');
+        function updateUIStatus(data) {
+            // 偵測任務是否剛結束
+            if (isSystemRunning && !data.is_running) {
+                console.log("任務已結束，正在更新數據進度...");
+                init(); // 重新抓取收集器清單以更新筆數
+            }
+            
+            isSystemRunning = data.is_running;
+            const runBtn = document.getElementById('run-btn');
+            const singleBtns = document.querySelectorAll('.run-single-btn');
 
-            if (data.is_running) {
-                dot.className = 'dot running';
-                text.innerText = data.last_message || '正在執行任務...';
-                btn.disabled = true;
-                btn.innerText = '任務執行中...';
+            if (isSystemRunning) {
+                runBtn.disabled = true;
+                runBtn.innerText = '任務執行中...';
+                singleBtns.forEach(b => b.style.opacity = '0.5');
             } else {
-                dot.className = 'dot';
-                text.innerText = '系統閒置';
-                btn.disabled = false;
-                btn.innerText = '執行收集任務';
+                runBtn.disabled = false;
+                runBtn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"></polyline><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg> 執行已勾選項目`;
+                singleBtns.forEach(b => b.style.opacity = '1');
             }
 
             if (data.history) {
@@ -310,7 +442,6 @@
             const logEl = document.getElementById('logs');
             logEl.innerHTML += renderLog(log);
             logEl.scrollTop = logEl.scrollHeight;
-            document.getElementById('status-text').innerText = log.msg;
         }
 
         function renderLog(log) {
@@ -329,7 +460,6 @@
                 document.getElementById('db-conn').innerText = status.db_connected ? 'Connected' : 'Disconnected';
                 document.getElementById('db-conn').style.color = status.db_connected ? 'var(--success)' : 'var(--error)';
                 document.getElementById('token-count').innerText = `${status.token_count} (${status.token_mode})`;
-                document.getElementById('rate-limit').innerText = status.rate_limiter_status.can_call ? 'Normal' : 'Limited';
                 
                 renderCollectors(colls);
             } catch (e) { console.error(e); }
@@ -340,8 +470,10 @@
             container.innerHTML = '';
             
             const groupNames = { technical: '技術指標', chip: '籌碼面', fundamental: '基本面' };
-            
+            let totalModules = 0;
+
             for (const [key, items] of Object.entries(groups)) {
+                totalModules += items.length;
                 container.innerHTML += `
                     <div class="group-header">
                         <span>${groupNames[key]}</span>
@@ -349,39 +481,65 @@
                     </div>
                 `;
                 items.forEach(item => {
-                    const hasRange = item.range !== "無時間限制 (完整)";
+                    // 解析日期範圍: "YYYY-MM-DD ~ YYYY-MM-DD (完整)"
+                    const dateMatch = item.range.match(/(\d{4}-\d{2}-\d{2}) ~ (\d{4}-\d{2}-\d{2})/);
+                    const startDate = dateMatch ? dateMatch[1] : '';
+                    const endDate = dateMatch ? dateMatch[2] : '';
+                    const isNoLimit = item.range.includes("無時間限制");
+
                     container.innerHTML += `
-                        <div class="collector-item" onclick="handleItemClick(event, ${item.id})">
+                        <div class="collector-item">
                             <input type="checkbox" class="cb-${key}" value="${item.id}" id="cb-${item.id}">
-                            <div class="collector-content">
+                            <div class="collector-content" onclick="handleItemClick(${item.id})">
                                 <span class="collector-name">${item.name}</span>
                                 <div class="collector-meta">
-                                    <span>${item.range}</span>
                                     <span class="badge-status ${item.completed_count > 0 ? 'active' : ''}">
                                         ${item.completed_count > 0 ? `已抓取 ${item.completed_count} 筆` : '尚未抓取'}
                                     </span>
-                                </div>
-                                <div id="date-${item.id}" class="date-controls">
-                                    <input type="date" id="start-${item.id}" placeholder="開始" onclick="event.stopPropagation()">
-                                    <input type="date" id="end-${item.id}" placeholder="結束" onclick="event.stopPropagation()">
+                                    <div class="date-controls" onclick="event.stopPropagation()">
+                                        ${isNoLimit ? 
+                                            `<span style="opacity:0.6; font-size:0.65rem;">${item.range}</span>` : 
+                                            `<span>區間:</span>
+                                             <input type="date" id="start-${item.id}" value="${startDate}" data-default="${startDate}" title="開始日期">
+                                             <span>~</span>
+                                             <input type="date" id="end-${item.id}" value="${endDate}" data-default="${endDate}" title="結束日期">
+                                             <span class="reset-link" onclick="resetDate(${item.id})" title="恢復預設範圍">(預設)</span>`
+                                        }
+                                    </div>
                                 </div>
                             </div>
+                            <button class="run-single-btn" onclick="runSingle(${item.id})" title="立即執行此項目">
+                                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                            </button>
                         </div>
                     `;
                 });
             }
+            document.getElementById('module-count').innerText = `共 ${totalModules} 個模組`;
         }
 
-        function handleItemClick(e, id) {
-            if (e.target.tagName === 'INPUT') return;
+        function resetDate(id) {
+            const start = document.getElementById(`start-${id}`);
+            const end = document.getElementById(`end-${id}`);
+            if (start) start.value = start.getAttribute('data-default');
+            if (end) end.value = end.getAttribute('data-default');
+        }
+
+        function getNow() {
+            return new Date().toTimeString().split(' ')[0];
+        }
+
+        function resetAllDates() {
+            const inputs = document.querySelectorAll('input[data-default]');
+            inputs.forEach(input => {
+                input.value = input.getAttribute('data-default');
+            });
+            appendLog({ time: getNow(), level: 'info', msg: '已將所有模組時間恢復為預設範圍' });
+        }
+
+        function handleItemClick(id) {
             const cb = document.getElementById(`cb-${id}`);
             cb.checked = !cb.checked;
-            toggleDate(id, cb.checked);
-        }
-
-        function toggleDate(id, show) {
-            const el = document.getElementById(`date-${id}`);
-            if (el) el.classList.toggle('visible', show);
         }
 
         function toggleGroup(key) {
@@ -393,29 +551,42 @@
             });
         }
 
-        document.getElementById('run-btn').onclick = async () => {
-            const selected = Array.from(document.querySelectorAll('input[type="checkbox"]:checked')).map(c => parseInt(c.value));
-            if (selected.length === 0) return alert('請選擇至少一個爬蟲');
+        async function runTasks(ids) {
+            if (isSystemRunning) return alert('系統正在執行其他任務中');
+            
             const body = {
-                collector_ids: selected,
+                collector_ids: ids,
                 use_custom_range: document.getElementById('custom-range').checked,
                 start_date: document.getElementById('global-start').value || null,
                 end_date: document.getElementById('global-end').value || null
             };
-            if (selected.length === 1) {
-                const id = selected[0];
-                const s = document.getElementById(`start-${id}`).value;
-                const e = document.getElementById(`end-${id}`).value;
+            
+            // 如果是單個執行且有設定日期，優先使用單體日期
+            if (ids.length === 1) {
+                const id = ids[0];
+                const s = document.getElementById(`start-${id}`)?.value;
+                const e = document.getElementById(`end-${id}`)?.value;
                 if (s) body.start_date = s;
                 if (e) body.end_date = e;
             }
+
             const res = await fetch('/api/v1/run', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(body)
             });
-            if (res.ok) console.log('Task started');
-            else alert('啟動失敗');
+            
+            if (!res.ok) alert('啟動失敗');
+        }
+
+        function runSingle(id) {
+            runTasks([id]);
+        }
+
+        document.getElementById('run-btn').onclick = () => {
+            const selected = Array.from(document.querySelectorAll('input[type="checkbox"]:checked')).map(c => parseInt(c.value));
+            if (selected.length === 0) return alert('請選擇至少一個爬蟲');
+            runTasks(selected);
         };
 
         // Settings Logic
@@ -432,6 +603,10 @@
                 document.getElementById('s-token').value = data.finmind_token;
                 document.getElementById('s-workers').value = data.max_workers;
                 document.getElementById('s-api-limit').value = data.api_max_calls;
+                document.getElementById('s-api-wait-402').value = data.api_wait_402;
+                document.getElementById('s-api-retry').value = data.api_retry_delay;
+                document.getElementById('s-db-pool-min').value = data.db_pool_min;
+                document.getElementById('s-db-pool-max').value = data.db_pool_max;
                 document.getElementById('s-log-level').value = data.log_level;
                 document.getElementById('s-start-date').value = data.default_start_date;
                 document.getElementById('s-export-dir').value = data.export_dir;
@@ -456,6 +631,10 @@
                 finmind_token: document.getElementById('s-token').value,
                 max_workers: parseInt(document.getElementById('s-workers').value),
                 api_max_calls: parseInt(document.getElementById('s-api-limit').value),
+                api_wait_402: parseInt(document.getElementById('s-api-wait-402').value),
+                api_retry_delay: parseInt(document.getElementById('s-api-retry').value),
+                db_pool_min: parseInt(document.getElementById('s-db-pool-min').value),
+                db_pool_max: parseInt(document.getElementById('s-db-pool-max').value),
                 log_level: document.getElementById('s-log-level').value,
                 default_start_date: document.getElementById('s-start-date').value,
                 export_dir: document.getElementById('s-export-dir').value

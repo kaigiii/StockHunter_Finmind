@@ -37,10 +37,18 @@ if not FINMIND_API_TOKENS:
 API_MAX_CALLS_PER_HOUR = int(os.getenv('API_MAX_CALLS_PER_HOUR', 300))
 API_TIME_WINDOW = int(os.getenv('API_TIME_WINDOW_SECONDS', 3600))
 
-# --- 效能與併發 ---
+# --- API 頻率與重試設定
 MAX_WORKERS = int(os.getenv('MAX_WORKERS', 5))
+API_MAX_CALLS_PER_HOUR = int(os.getenv('API_MAX_CALLS_PER_HOUR', 300))
+API_WAIT_TIME_402 = int(os.getenv('API_WAIT_TIME_402', 600))  # 遇到 402 限制時等待秒數
+API_RETRY_DELAY = int(os.getenv('API_RETRY_DELAY', 5))        # 一般錯誤重試等待秒數
+HTTP_TIMEOUT = int(os.getenv('HTTP_TIMEOUT', 30))             # API 請求超時時間 (秒)
 
-# --- Web 伺服器設定 ---
+# 資料庫連線池設定
+DB_POOL_MIN = int(os.getenv('DB_POOL_MIN', 1))
+DB_POOL_MAX = int(os.getenv('DB_POOL_MAX', 20))
+
+# Web 伺服器設定
 WEB_HOST = os.getenv('WEB_HOST', '0.0.0.0')
 WEB_PORT = int(os.getenv('WEB_PORT', 8000))
 

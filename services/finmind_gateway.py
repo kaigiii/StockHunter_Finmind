@@ -139,15 +139,18 @@ class FinMindRevolver:
                     # 理論上不該發生，防止無窮迴圈
                     time.sleep(1)
 
-    def _mark_token_cooldown(self, api, hours=1):
+    def _mark_token_cooldown(self, api, seconds=None):
         """將指定 API 標記為冷卻"""
         from datetime import datetime, timedelta
+        if seconds is None:
+            seconds = config.API_WAIT_TIME_402
+            
         with self._lock:
             status = self.token_status.get(api)
             if status:
                 status['valid'] = False
-                status['cooldown_until'] = datetime.now() + timedelta(hours=hours)
-                logger.warning(f"[Cooldown] Token 已標記為冷卻，將暫停使用 {hours} 小時 (至 {status['cooldown_until'].strftime('%H:%M:%S')})")
+                status['cooldown_until'] = datetime.now() + timedelta(seconds=seconds)
+                logger.warning(f"[Cooldown] Token 已標記為冷卻，將暫停使用 {seconds} 秒 (至 {status['cooldown_until'].strftime('%H:%M:%S')})")
 
     def __getattr__(self, name):
         """
@@ -174,7 +177,12 @@ class FinMindRevolver:
                         logger.info(f"[Retry] 切換至下一個 Token 重試... ({retry_count}/{max_retries})")
                         continue
                     else:
-                        # 其他錯誤直接拋出
+                        # 其他錯誤（網路抖動等）
+                        retry_count += 1
+                        if retry_count < max_retries:
+                            logger.warning(f"[Error] API 請求異常: {e}，將在 {config.API_RETRY_DELAY} 秒後重試...")
+                            time.sleep(config.API_RETRY_DELAY)
+                            continue
                         raise e
             
             # 如果重試多次都失敗

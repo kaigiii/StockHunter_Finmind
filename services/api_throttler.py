@@ -82,10 +82,11 @@ class APIThrottler:
         """
         logger.warning(f"[RateLimiter] 收到 API 限制通知 ({current_collector_name})")
         
-        # 簡單等待一段時間，避免瘋狂迴圈
+        # 根據設定等待冷卻時間
         import time
-        logger.info("暫停 60 秒...")
-        time.sleep(60)
+        wait_seconds = config.API_WAIT_TIME_402
+        logger.info(f"偵測到 API 限制，暫停等待 {wait_seconds} 秒...")
+        time.sleep(wait_seconds)
         
-        # 總是返回 '1' (繼續)，因為現在由 api.py 負責換 token
+        # 總是返回 '1' (繼續)，因為現在由 finmind_gateway.py 負責換 token
         return '1'

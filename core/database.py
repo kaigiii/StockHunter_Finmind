@@ -35,15 +35,15 @@ class DatabaseManager:
         try:
             logger.info("正在初始化資料庫連線池...")
             DatabaseManager._pool = psycopg2.pool.ThreadedConnectionPool(
-                minconn=1,
-                maxconn=50,
+                minconn=config.DB_POOL_MIN,
+                maxconn=config.DB_POOL_MAX,
                 host=self.db_config['host'],
                 port=self.db_config['port'],
                 user=self.db_config['user'],
                 password=self.db_config['password'],
                 database=self.db_config['database']
             )
-            logger.info("資料庫連線池初始化成功 (最小連線: 1, 最大連線: 50)")
+            logger.info(f"資料庫連線池初始化成功 (最小連線: {config.DB_POOL_MIN}, 最大連線: {config.DB_POOL_MAX})")
         except Exception as e:
             logger.error(f"連線池初始化失敗: {e}")
             DatabaseManager._pool = None

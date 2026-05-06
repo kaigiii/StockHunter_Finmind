@@ -12,6 +12,10 @@ class SettingsUpdate(BaseModel):
     finmind_token: str
     max_workers: int
     api_max_calls: int
+    api_wait_402: int
+    api_retry_delay: int
+    db_pool_min: int
+    db_pool_max: int
     log_level: str
     export_dir: str
     default_start_date: str
@@ -31,6 +35,10 @@ class ConfigService:
             "finmind_token": os.getenv("FINMIND_API_TOKEN_1", ""),
             "max_workers": int(os.getenv("MAX_WORKERS", 5)),
             "api_max_calls": int(os.getenv("API_MAX_CALLS_PER_HOUR", 300)),
+            "api_wait_402": int(os.getenv("API_WAIT_TIME_402", 600)),
+            "api_retry_delay": int(os.getenv("API_RETRY_DELAY", 5)),
+            "db_pool_min": int(os.getenv("DB_POOL_MIN", 1)),
+            "db_pool_max": int(os.getenv("DB_POOL_MAX", 20)),
             "log_level": os.getenv("LOG_LEVEL", "INFO"),
             "export_dir": os.getenv("EXPORT_DIR", "csv_exports"),
             "default_start_date": os.getenv("DEFAULT_START_DATE", "2020-01-01")
@@ -51,6 +59,10 @@ class ConfigService:
                 "MAX_WORKERS": str(settings.max_workers),
                 "FINMIND_API_TOKEN_1": settings.finmind_token,
                 "API_MAX_CALLS_PER_HOUR": str(settings.api_max_calls),
+                "API_WAIT_TIME_402": str(settings.api_wait_402),
+                "API_RETRY_DELAY": str(settings.api_retry_delay),
+                "DB_POOL_MIN": str(settings.db_pool_min),
+                "DB_POOL_MAX": str(settings.db_pool_max),
                 "LOG_LEVEL": settings.log_level,
                 "EXPORT_DIR": settings.export_dir,
                 "DEFAULT_START_DATE": settings.default_start_date

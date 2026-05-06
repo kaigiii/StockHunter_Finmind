@@ -9,6 +9,7 @@ import pandas as pd
 import os
 from datetime import datetime
 import core.config as config
+from core.database import DatabaseManager
 
 # 設置日誌
 logger = logging.getLogger(__name__)

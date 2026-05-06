@@ -1,13 +1,7 @@
-#!/usr/bin/env python3
-"""
-StockHunter FinMind 主程式
-整合所有功能並提供統一的調用介面 (Universal Interface)
-支持 CLI 和未來的 WebUI
-"""
-
 import sys
 import logging
 import time
+import argparse
 from dotenv import load_dotenv
 
 import core.config as config
@@ -27,46 +21,14 @@ def check_dependencies():
         import psycopg2
         import pandas
         from FinMind.data import DataLoader
-        logger.info("✓ 所有依賴已安裝")
         return True
     except ImportError as e:
         logger.error(f"✗ 缺少依賴: {e}")
         logger.info("請運行: pip install -r requirements.txt")
         return False
 
-def check_config():
-    """檢查配置是否正確"""
-    # 這裡可以透過 Controller 的 config 邏輯來檢查
-    # 簡單起見，直接保留基本檢查
-    return True
-
-def setup_system(controller):
-    """系統初始化設置"""
-    try:
-        # 這裡可以通過 controller 調用 db_manager 初始化
-        # 目前 CollectorEngine 初始化時已經初始化了 DB Manager
-        
-        # 檢查資料表
-        # TODO: 將 check_tables_exist 邏輯移入 controller
-        # 暫時假設如果 DB 連線正常則視為 OK
-        status = controller.get_system_status()
-        if not status['db_connected']:
-             logger.error("無法連接到數據庫！")
-             return False
-             
-        # 可以添加自動創建表格的邏輯
-        # if not controller.check_tables():
-        #     controller.create_tables()
-
-        return True
-    except Exception as e:
-        logger.error(f"系統設置異常: {e}")
-        return False
-
 def ui_callback_handler(message, level="info"):
-    """
-    通用 UI 回調處理器，用於接收 Controller 的事件
-    """
+    """通用 UI 回調處理器"""
     if level == "error":
         print(f"❌ {message}")
     elif level == "success":
@@ -76,68 +38,85 @@ def ui_callback_handler(message, level="info"):
     else:
         print(message)
 
+def run_headless(controller, ids_str, start=None, end=None, custom=False):
+    """無介面直接執行模式"""
+    # 解析 ID
+    collector_ids = []
+    if ids_str.lower() == 'all':
+        collector_ids = list(range(1, 29))
+    elif ids_str.lower() in ['technical', 'chip', 'fundamental']:
+        groups = controller.get_available_collectors()
+        collector_ids = [item['id'] for item in groups.get(ids_str.lower(), [])]
+    else:
+        collector_ids = [int(x.strip()) for x in ids_str.split(',') if x.strip().isdigit()]
+
+    if not collector_ids:
+        print("❌ 未能識別有效的收集器 ID")
+        return
+
+    print(f"🚀 [Headless] 開始執行 {len(collector_ids)} 個收集任務...")
+    for msgs in controller.run_collectors(collector_ids, custom, start, end):
+        if isinstance(msgs, dict):
+            m_type = msgs.get('type')
+            m_msg = msgs.get('msg', '')
+            if m_type == 'log':
+                ui_callback_handler(m_msg, msgs.get('level', 'info'))
+            elif m_type == 'summary':
+                ui_callback_handler(m_msg, 'success')
+
 def main():
+    # 0. 參數解析
+    parser = argparse.ArgumentParser(description="StockHunter CLI Mode")
+    parser.add_argument("--ids", type=str, help="指定收集器 ID (例如: 1,4,10 或 'all' 或 'chip')")
+    parser.add_argument("--start", type=str, help="自定義開始日期 (YYYY-MM-DD)")
+    parser.add_argument("--end", type=str, help="自定義結束日期 (YYYY-MM-DD)")
+    parser.add_argument("--custom", action="store_true", help="強制使用自定義時間範圍模式")
+    args = parser.parse_args()
+
     # 1. 檢查依賴
     if not check_dependencies():
         sys.exit(1)
     
-    # 2. 初始化引擎 (Core Logic)
-    logger.info("正在初始化系統核心...")
+    # 2. 初始化引擎
     controller = CollectorEngine()
     
-    # 3. 初始化 UI (View)
+    # 3. 如果有參數，進入無介面模式
+    if args.ids:
+        run_headless(controller, args.ids, args.start, args.end, args.custom)
+        return
+
+    # 4. 初始化 TUI (互動模式)
     ui = ConsoleUI(controller)
-    
-    # 4. 系統檢查與設置
-    if not setup_system(controller):
-        sys.exit(1)
-        
-    # 5. 顯示歡迎畫面
     ui.display_welcome_message()
     
-    # 6. 主循環
+    # 5. 主循環
     while True:
         try:
-            # 顯示主選單
             ui.show_collector_menu()
-            
-            # 獲取用戶輸入
             choice = ui.get_user_choice()
             
-            # 處理通用選項
             if choice == 'exit':
                 ui.display_goodbye_message()
                 break
-                
-            elif isinstance(choice, str) and choice in ['status', 'reset_progress', 'drop_database', 'export_csv']:
-                # 特殊功能路由
+            elif isinstance(choice, str):
                 ui.handle_special_options(choice)
-                
             elif isinstance(choice, list):
-                # 執行收集器
                 ui.show_time_range_menu()
                 use_custom_range = ui.get_time_range_choice()
                 
                 if use_custom_range is not None:
                     print(f"\n🚀 開始執行 {len(choice)} 個收集任務...")
-                    
-                    # 委派給 Controller 執行
-                    # 注意: Generator 需要迭代才能執行
                     for msgs in controller.run_collectors(choice, use_custom_range):
                          if isinstance(msgs, dict):
                              m_type = msgs.get('type')
                              m_msg = msgs.get('msg', '')
-                             if m_type == 'wait':
-                                 print(f"⏳ {m_msg}")
-                                 # Controller 內部已經 handle 了 sleep
-                             elif m_type == 'log':
+                             if m_type == 'log':
                                  ui_callback_handler(m_msg, msgs.get('level', 'info'))
                              elif m_type == 'summary':
                                  ui_callback_handler(m_msg, 'success')
 
                     print("\n🎉 所有任務執行完畢！")
             
-            # 詢問是否繼續
             continue_choice = input("\n是否要繼續使用？(y/n): ").strip().lower()
             if continue_choice in ['n', 'no']:
                 ui.display_goodbye_message()
