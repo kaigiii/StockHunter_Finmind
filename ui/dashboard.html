@@ -357,6 +357,13 @@
                         <input type="number" id="s-api-retry" value="5">
                     </div>
                 </div>
+                <div class="form-group">
+                    <label>頻率限制處理策略 (402 Action)</label>
+                    <select id="s-api-limit-action" style="background: #000; border: 1px solid var(--border); border-radius: 0.5rem; color: #fff; padding: 0.5rem; font-size: 0.8rem; width: 100%;">
+                        <option value="stop">立即停止 (終止任務以更換 IP 與 Token)</option>
+                        <option value="sleep">自動睡眠 (在背景休眠等待)</option>
+                    </select>
+                </div>
 
                 <div class="group-header"><span>進階連線與維護設定</span></div>
                 <div style="display:grid; grid-template-columns: 1fr 1fr; gap:0.5rem">
@@ -605,6 +612,7 @@
                 document.getElementById('s-api-limit').value = data.api_max_calls;
                 document.getElementById('s-api-wait-402').value = data.api_wait_402;
                 document.getElementById('s-api-retry').value = data.api_retry_delay;
+                document.getElementById('s-api-limit-action').value = data.api_rate_limit_action;
                 document.getElementById('s-db-pool-min').value = data.db_pool_min;
                 document.getElementById('s-db-pool-max').value = data.db_pool_max;
                 document.getElementById('s-log-level').value = data.log_level;
@@ -633,6 +641,7 @@
                 api_max_calls: parseInt(document.getElementById('s-api-limit').value),
                 api_wait_402: parseInt(document.getElementById('s-api-wait-402').value),
                 api_retry_delay: parseInt(document.getElementById('s-api-retry').value),
+                api_rate_limit_action: document.getElementById('s-api-limit-action').value,
                 db_pool_min: parseInt(document.getElementById('s-db-pool-min').value),
                 db_pool_max: parseInt(document.getElementById('s-db-pool-max').value),
                 log_level: document.getElementById('s-log-level').value,

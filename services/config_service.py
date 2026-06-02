@@ -19,6 +19,7 @@ class SettingsUpdate(BaseModel):
     log_level: str
     export_dir: str
     default_start_date: str
+    api_rate_limit_action: str = "stop"
 
 class ConfigService:
     def __init__(self):
@@ -41,7 +42,8 @@ class ConfigService:
             "db_pool_max": int(os.getenv("DB_POOL_MAX", 20)),
             "log_level": os.getenv("LOG_LEVEL", "INFO"),
             "export_dir": os.getenv("EXPORT_DIR", "csv_exports"),
-            "default_start_date": os.getenv("DEFAULT_START_DATE", "2020-01-01")
+            "default_start_date": os.getenv("DEFAULT_START_DATE", "2020-01-01"),
+            "api_rate_limit_action": os.getenv("API_RATE_LIMIT_ACTION", "stop")
         }
 
     def update_settings(self, settings: SettingsUpdate):
@@ -65,7 +67,8 @@ class ConfigService:
                 "DB_POOL_MAX": str(settings.db_pool_max),
                 "LOG_LEVEL": settings.log_level,
                 "EXPORT_DIR": settings.export_dir,
-                "DEFAULT_START_DATE": settings.default_start_date
+                "DEFAULT_START_DATE": settings.default_start_date,
+                "API_RATE_LIMIT_ACTION": settings.api_rate_limit_action
             }
             
             if settings.db_password != "*" * 8:

@@ -43,6 +43,7 @@ API_MAX_CALLS_PER_HOUR = int(os.getenv('API_MAX_CALLS_PER_HOUR', 300))
 API_WAIT_TIME_402 = int(os.getenv('API_WAIT_TIME_402', 600))  # 遇到 402 限制時等待秒數
 API_RETRY_DELAY = int(os.getenv('API_RETRY_DELAY', 5))        # 一般錯誤重試等待秒數
 HTTP_TIMEOUT = int(os.getenv('HTTP_TIMEOUT', 30))             # API 請求超時時間 (秒)
+API_RATE_LIMIT_ACTION = os.getenv('API_RATE_LIMIT_ACTION', 'stop').lower() # 'stop' 或 'sleep'
 
 # 資料庫連線池設定
 DB_POOL_MIN = int(os.getenv('DB_POOL_MIN', 1))

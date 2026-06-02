@@ -14,6 +14,10 @@ from typing import Optional
 from FinMind.data import DataLoader
 import core.config as config
 
+class RateLimitException(Exception):
+    """當所有 API Token 均已達到頻率上限且配置為立即停止時拋出"""
+    pass
+
 _finmind_revolver = None
 
 class FinMindRevolver:
@@ -110,8 +114,9 @@ class FinMindRevolver:
                         return api
                 
                 # 3. 如果跑到這，表示剛剛檢查一輪發現所有 Token 都在冷卻
-                # 找出最早解禁的時間，設定全局冷卻
-                
+                if config.API_RATE_LIMIT_ACTION == 'stop':
+                    raise RateLimitException("所有 API Token 均已達到頻率上限 (402)，已自動終止任務以供更換 IP 或 Token。")
+
                 if self.global_cooldown_until:
                      # 可能別的線程剛好設定了，continue 重跑流程 1
                      continue
