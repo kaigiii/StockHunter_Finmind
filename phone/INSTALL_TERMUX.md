@@ -44,6 +44,7 @@ adb shell "run-as com.termux cp -r /data/local/tmp/StockHunter_Finmind /data/dat
 由於 Pydantic 的底層核心是 Rust 寫的，在 Android 上編譯時必須限制為**單執行緒**以防檔案寫入死鎖。請執行以下複合指令進行安裝：
 
 ```bash
+# 注意此指令已調整，因為專案位置在 ~/StockHunter_Finmind
 adb shell "run-as com.termux env -i HOME=/data/data/com.termux/files/home PATH=/data/data/com.termux/files/usr/bin LD_LIBRARY_PATH=/data/data/com.termux/files/usr/lib TMPDIR=/data/data/com.termux/files/usr/tmp CARGO_TARGET_DIR=/data/data/com.termux/files/usr/tmp/cargo-target ANDROID_API_LEVEL=24 CARGO_BUILD_JOBS=1 /data/data/com.termux/files/usr/bin/bash -c 'cd ~/StockHunter_Finmind && pip install --no-cache-dir -r requirements.txt'"
 ```
 
@@ -82,8 +83,8 @@ adb shell "su u0_a166 -c 'env HOME=/data/data/com.termux/files/home PATH=/data/d
 執行以下指令在 Termux 中加入快速啟動捷徑，並建立載入關聯：
 
 ```bash
-# 1. 寫入快捷指令至 ~/.bashrc
-adb shell "su u0_a166 -c 'echo -e \"alias stock=\\\"cd ~/StockHunter_Finmind && bash run_phone.sh\\\"\nalias stock-reset=\\\"cd ~/StockHunter_Finmind && bash reset_phone.sh\\\"\nalias stock-export=\\\"cd ~/StockHunter_Finmind && bash export_db.sh\\\"\nalias stock-ui=\\\"cd ~/StockHunter_Finmind && bash run_ui.sh\\\"\nalias stock-web=\\\"cd ~/StockHunter_Finmind && bash run_web.sh\\\"\" > /data/data/com.termux/files/home/.bashrc'"
+# 1. 寫入快捷指令至 ~/.bashrc (路徑調整為指向 phone/ 目錄)
+adb shell "su u0_a166 -c 'echo -e \"alias stock=\\\"cd ~/StockHunter_Finmind/phone && bash run_phone.sh\\\"\nalias stock-reset=\\\"cd ~/StockHunter_Finmind/phone && bash reset_phone.sh\\\"\nalias stock-export=\\\"cd ~/StockHunter_Finmind/phone && bash export_db.sh\\\"\nalias stock-ui=\\\"cd ~/StockHunter_Finmind/phone && bash run_ui.sh\\\"\nalias stock-web=\\\"cd ~/StockHunter_Finmind/phone && bash run_web.sh\\\"\" > /data/data/com.termux/files/home/.bashrc'"
 
 # 2. 建立引導讀取的 ~/.bash_profile
 adb shell "su u0_a166 -c 'echo -e \"if [ -f ~/.bashrc ]; then\n    . ~/.bashrc\nfi\" > /data/data/com.termux/files/home/.bash_profile'"

@@ -9,6 +9,10 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m'
 
+# 定位腳本所在目錄，並切換至專案根目錄
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+cd "$DIR/.."
+
 BACKUP_FILE="/data/data/com.termux/files/home/StockHunter_Finmind/stock_hunter_backup.dump"
 
 echo -e "${GREEN}===============================================${NC}"

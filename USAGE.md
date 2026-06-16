@@ -2,6 +2,9 @@
 
 本指南介紹如何使用手機獨立運行 StockHunter 系統，進行數據收集、IP 切換、進度重置與資料備份。
 
+> [!NOTE]
+> 所有手機專屬的自動化啟動腳本與詳細的 Termux 系統安裝說明，目前均已收納至 [phone/](file:///Users/kaigiii/Coding/StockHunter_Finmind/phone) 目錄下。
+
 ---
 
 ## 🏃 1. 每日數據收集流程

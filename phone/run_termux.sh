@@ -11,9 +11,9 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-# 專案根目錄 (自動取得目前腳本所在位置)
+# 專案根目錄 (自動取得目前腳本所在位置之父目錄)
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-cd "$DIR"
+cd "$DIR/.."
 
 # 偵測是否在 Termux 中運行並嘗試取得 Wake Lock
 if [ -d "/data/data/com.termux" ]; then

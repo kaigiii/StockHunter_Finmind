@@ -9,6 +9,10 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m'
 
+# 定位腳本所在目錄
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+cd "$DIR"
+
 echo -e "${GREEN}===============================================${NC}"
 echo -e "${GREEN}📱 StockHunter 手機端一鍵啟動程序${NC}"
 echo -e "${GREEN}===============================================${NC}"
@@ -28,5 +32,5 @@ sleep 3
 echo -e "${GREEN}✅ 資料庫伺服器啟動成功，正在載入數據收集引擎...${NC}"
 echo ""
 
-# 使用 bash 執行爬蟲，繞過 env bad interpreter 問題，並傳遞所有啟動參數 ($@)
+# 使用 bash 執行同目錄下的 run_termux.sh，並傳遞所有啟動參數 ($@)
 bash run_termux.sh "$@"
