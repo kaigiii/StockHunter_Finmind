@@ -83,7 +83,7 @@ adb shell "su u0_a166 -c 'env HOME=/data/data/com.termux/files/home PATH=/data/d
 
 ```bash
 # 1. 寫入快捷指令至 ~/.bashrc
-adb shell "su u0_a166 -c 'echo -e \"alias stock=\\\"cd ~/StockHunter_Finmind && bash run_phone.sh\\\"\nalias stock-reset=\\\"cd ~/StockHunter_Finmind && bash reset_phone.sh\\\"\" > /data/data/com.termux/files/home/.bashrc'"
+adb shell "su u0_a166 -c 'echo -e \"alias stock=\\\"cd ~/StockHunter_Finmind && bash run_phone.sh\\\"\nalias stock-reset=\\\"cd ~/StockHunter_Finmind && bash reset_phone.sh\\\"\nalias stock-export=\\\"cd ~/StockHunter_Finmind && bash export_db.sh\\\"\" > /data/data/com.termux/files/home/.bashrc'"
 
 # 2. 建立引導讀取的 ~/.bash_profile
 adb shell "su u0_a166 -c 'echo -e \"if [ -f ~/.bashrc ]; then\n    . ~/.bashrc\nfi\" > /data/data/com.termux/files/home/.bash_profile'"
@@ -98,3 +98,4 @@ adb shell "su -c 'chown u0_a166:u0_a166 /data/data/com.termux/files/home/.bashrc
 未來只要打開手機的 **Termux App**，輸入以下捷徑指令：
 * **`stock`**：一鍵開啟資料庫並啟動爬蟲（支援中途斷點續傳）。
 * **`stock-reset`**：一鍵將資料庫內的下載進度清空歸零（以便下一次進行完整重新下載）。
+* **`stock-export`**：一鍵打包 PostgreSQL 資料庫為備份檔，便於傳輸回電腦還原。
