@@ -156,6 +156,10 @@ class CollectorEngine:
             try:
                 # 1. 檢查 API 限制 (修復：找回被刪除的檢查邏輯)
                 if not self.rate_limiter.can_call():
+                    if config.API_RATE_LIMIT_ACTION == 'stop':
+                        from services.finmind_gateway import RateLimitException
+                        raise RateLimitException("API 調用次數已達設定上限。")
+                    
                     next_time = self.rate_limiter.get_next_available_time()
                     wait_seconds = (next_time - datetime.now()).total_seconds()
                     if wait_seconds > 0:
@@ -193,6 +197,13 @@ class CollectorEngine:
                 yield {"type": "log", "msg": f"✅ {collector_name} 執行完成", "level": "success"}
                 
             except Exception as e:
+                from services.finmind_gateway import RateLimitException
+                if isinstance(e, RateLimitException):
+                    error_msg = f"🛑 觸發 API 上限停止機制: {str(e)}"
+                    logger.error(error_msg)
+                    yield {"type": "log", "msg": error_msg, "level": "error"}
+                    raise e
+                
                 error_msg = f"❌ {module_basename} 發生錯誤: {str(e)}"
                 logger.error(error_msg)
                 yield {"type": "log", "msg": error_msg, "level": "error"}

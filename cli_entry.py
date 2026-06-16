@@ -52,17 +52,26 @@ def run_headless(controller, ids_str, start=None, end=None, custom=False):
 
     if not collector_ids:
         print("❌ 未能識別有效的收集器 ID")
-        return
+        sys.exit(1)
 
     print(f"🚀 [Headless] 開始執行 {len(collector_ids)} 個收集任務...")
-    for msgs in controller.run_collectors(collector_ids, custom, start, end):
-        if isinstance(msgs, dict):
-            m_type = msgs.get('type')
-            m_msg = msgs.get('msg', '')
-            if m_type == 'log':
-                ui_callback_handler(m_msg, msgs.get('level', 'info'))
-            elif m_type == 'summary':
-                ui_callback_handler(m_msg, 'success')
+    try:
+        for msgs in controller.run_collectors(collector_ids, custom, start, end):
+            if isinstance(msgs, dict):
+                m_type = msgs.get('type')
+                m_msg = msgs.get('msg', '')
+                if m_type == 'log':
+                    ui_callback_handler(m_msg, msgs.get('level', 'info'))
+                elif m_type == 'summary':
+                    ui_callback_handler(m_msg, 'success')
+    except Exception as e:
+        from services.finmind_gateway import RateLimitException
+        if isinstance(e, RateLimitException):
+            print(f"\n🛑 [Rate Limit Error] 達到 API 頻率限制，中斷任務以供更換 IP: {e}")
+            sys.exit(42)
+        else:
+            print(f"\n❌ [Error] 執行過程中出錯: {e}")
+            sys.exit(1)
 
 def main():
     # 0. 參數解析
@@ -106,14 +115,21 @@ def main():
                 
                 if use_custom_range is not None:
                     print(f"\n🚀 開始執行 {len(choice)} 個收集任務...")
-                    for msgs in controller.run_collectors(choice, use_custom_range):
-                         if isinstance(msgs, dict):
-                             m_type = msgs.get('type')
-                             m_msg = msgs.get('msg', '')
-                             if m_type == 'log':
-                                 ui_callback_handler(m_msg, msgs.get('level', 'info'))
-                             elif m_type == 'summary':
-                                 ui_callback_handler(m_msg, 'success')
+                    try:
+                        for msgs in controller.run_collectors(choice, use_custom_range):
+                             if isinstance(msgs, dict):
+                                 m_type = msgs.get('type')
+                                 m_msg = msgs.get('msg', '')
+                                 if m_type == 'log':
+                                     ui_callback_handler(m_msg, msgs.get('level', 'info'))
+                                 elif m_type == 'summary':
+                                     ui_callback_handler(m_msg, 'success')
+                    except Exception as e:
+                        from services.finmind_gateway import RateLimitException
+                        if isinstance(e, RateLimitException):
+                            print(f"\n🛑 [Rate Limit Error] 達到 API 頻率限制: {e}")
+                        else:
+                            print(f"\n❌ [Error] 執行過程中出錯: {e}")
 
                     print("\n🎉 所有任務執行完畢！")
             

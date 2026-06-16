@@ -33,7 +33,7 @@ class BaseStockListCollector:
         
     def _get_start_date(self, use_custom_range: bool, start_date: str = None) -> str:
         """獲取開始日期：優先順序為 手動指定 > 環境變數 > 系統預設"""
-        if use_custom_range and start_date:
+        if start_date:
             return start_date
         
         env_key = f"{self.collector_name.upper()}_START_DATE"
@@ -134,6 +134,7 @@ class BaseStockListCollector:
         
         success_count = 0
         error_count = 0
+        limit_triggered = False
         
         with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
             # 建立 Future 到 Stock ID 的映射
@@ -173,6 +174,7 @@ class BaseStockListCollector:
                         if msg == "API_LIMIT_402":
                             logger.error("偵測到某些線程觸發 API 上限 (402)，取消剩餘任務...")
                             executor.shutdown(wait=False, cancel_futures=True)
+                            limit_triggered = True
                             break 
                             
                         # 失敗不寫入，下次重試
@@ -192,6 +194,10 @@ class BaseStockListCollector:
                     error_count += 1
             
             if pbar: pbar.close()
+
+        if limit_triggered:
+            from services.finmind_gateway import RateLimitException
+            raise RateLimitException("所有 API Token 均已達到頻率上限 (402)")
 
         print(f"--- {self.collector_name} 收集完成！成功: {success_count}, 失敗: {error_count} ---")
         return True, f"成功處理 {success_count} 支股票"
@@ -237,7 +243,10 @@ class BaseDateListCollector:
         print(f"--- 正在收集 {self.collector_name} 數據 ---")
         
         # 決定時間範圍
-        if use_custom_range:
+        if start_date:
+            effective_start_date = start_date
+            effective_end_date = end_date or datetime.now().strftime('%Y-%m-%d')
+        elif use_custom_range:
             effective_start_date = start_date or config.DEFAULT_START_DATE
             effective_end_date = end_date or datetime.now().strftime('%Y-%m-%d')
         else:
@@ -283,7 +292,8 @@ class BaseDateListCollector:
         for i, current_date in enumerate(date_list, 1):
             if rate_limiter and not rate_limiter.can_call():
                 logger.warning("API 調用次數已達上限，執行中斷。")
-                break
+                from services.finmind_gateway import RateLimitException
+                raise RateLimitException("API 調用次數已達上限")
             
             print(f"處理日期: {current_date}")
             try:
@@ -300,6 +310,11 @@ class BaseDateListCollector:
             except Exception as e:
                 logger.error(f"處理日期 {current_date} 失敗: {e}")
                 # 失敗不更新進度
+                from services.finmind_gateway import RateLimitException
+                error_str = str(e)
+                if isinstance(e, RateLimitException) or ("Requests reach the upper limit" in error_str) or ("status:402" in error_str) or ("402" in error_str):
+                    logger.error("偵測到觸發 API 上限 (402)，中斷日期收集任務...")
+                    raise RateLimitException("在收集日期資料時觸發 API 頻率限制 (402)")
 
         print(f"--- {self.collector_name} 數據收集完成！---")
         return True, "完成"
@@ -332,9 +347,18 @@ class BaseOneShotCollector:
 
     def main(self, rate_limiter=None, progress_manager=None, **kwargs):
         print(f"--- 正在收集 {self.collector_name} 數據 ---")
+        
+        # 處理斷點續傳
+        if progress_manager:
+            resume_info = progress_manager.get_resume_info(self.collector_name, ["ALL"])
+            if resume_info.get('all_completed', False):
+                print(f"[已完成] 收集器 {self.collector_name} 先前已完成，跳過執行。")
+                return True, "已完成"
+
         if rate_limiter and not rate_limiter.can_call():
-            logger.warning("API 調用次數已達上限，跳過此收集器。")
-            return False, "API Rate Limit"
+            logger.warning("API 調用次數已達上限，中斷執行。")
+            from services.finmind_gateway import RateLimitException
+            raise RateLimitException("API 調用次數已達上限")
         
         try:
             df = self._call_api()
@@ -352,6 +376,10 @@ class BaseOneShotCollector:
                 return False, "Save failed"
         except Exception as e:
             logger.error(f"收集 {self.collector_name} 時發生錯誤: {e}")
+            from services.finmind_gateway import RateLimitException
+            error_str = str(e)
+            if isinstance(e, RateLimitException) or ("Requests reach the upper limit" in error_str) or ("status:402" in error_str) or ("402" in error_str):
+                raise RateLimitException(f"在收集 {self.collector_name} 時觸發 API 頻率限制 (402)")
             return False, str(e)
 
 class BaseDateRangeCollector(BaseOneShotCollector):
@@ -361,8 +389,18 @@ class BaseDateRangeCollector(BaseOneShotCollector):
     def main(self, use_custom_range=False, rate_limiter=None, progress_manager=None, **kwargs):
         print(f"--- 正在收集 {self.collector_name} 數據 ---")
         
+        # 處理斷點續傳
+        if progress_manager and not use_custom_range:
+            resume_info = progress_manager.get_resume_info(self.collector_name, ["ALL"])
+            if resume_info.get('all_completed', False):
+                print(f"[已完成] 收集器 {self.collector_name} 先前已完成，跳過執行。")
+                return True, "已完成"
+        
         # 決定時間範圍
-        if use_custom_range:
+        if kwargs.get('start_date'):
+            start_date = kwargs.get('start_date')
+            end_date = kwargs.get('end_date') or datetime.now().strftime('%Y-%m-%d')
+        elif use_custom_range:
             start_date = kwargs.get('start_date') or config.DEFAULT_START_DATE
             end_date = kwargs.get('end_date') or datetime.now().strftime('%Y-%m-%d')
         else:
@@ -372,8 +410,9 @@ class BaseDateRangeCollector(BaseOneShotCollector):
             end_date = datetime.now().strftime('%Y-%m-%d')
         
         if rate_limiter and not rate_limiter.can_call():
-            logger.warning("API 調用次數已達上限，跳過此收集器。")
-            return False, "API Rate Limit"
+            logger.warning("API 調用次數已達上限，中斷執行。")
+            from services.finmind_gateway import RateLimitException
+            raise RateLimitException("API 調用次數已達上限")
 
         try:
             df = self._call_api(start_date, end_date)
@@ -391,4 +430,8 @@ class BaseDateRangeCollector(BaseOneShotCollector):
                 return False, "Save failed"
         except Exception as e:
             logger.error(f"收集 {self.collector_name} 時發生錯誤: {e}")
+            from services.finmind_gateway import RateLimitException
+            error_str = str(e)
+            if isinstance(e, RateLimitException) or ("Requests reach the upper limit" in error_str) or ("status:402" in error_str) or ("402" in error_str):
+                raise RateLimitException(f"在收集 {self.collector_name} 時觸發 API 頻率限制 (402)")
             return False, str(e)
