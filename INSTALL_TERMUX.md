@@ -79,11 +79,11 @@ adb shell "su u0_a166 -c 'env HOME=/data/data/com.termux/files/home PATH=/data/d
 
 ## 📲 第五步：設定快捷指令別名 (Aliases)
 
-執行以下指令在 Termux 中加入 `stock` 和 `stock-reset` 捷徑，並建立載入關聯：
+執行以下指令在 Termux 中加入快速啟動捷徑，並建立載入關聯：
 
 ```bash
 # 1. 寫入快捷指令至 ~/.bashrc
-adb shell "su u0_a166 -c 'echo -e \"alias stock=\\\"cd ~/StockHunter_Finmind && bash run_phone.sh\\\"\nalias stock-reset=\\\"cd ~/StockHunter_Finmind && bash reset_phone.sh\\\"\nalias stock-export=\\\"cd ~/StockHunter_Finmind && bash export_db.sh\\\"\" > /data/data/com.termux/files/home/.bashrc'"
+adb shell "su u0_a166 -c 'echo -e \"alias stock=\\\"cd ~/StockHunter_Finmind && bash run_phone.sh\\\"\nalias stock-reset=\\\"cd ~/StockHunter_Finmind && bash reset_phone.sh\\\"\nalias stock-export=\\\"cd ~/StockHunter_Finmind && bash export_db.sh\\\"\nalias stock-ui=\\\"cd ~/StockHunter_Finmind && bash run_ui.sh\\\"\nalias stock-web=\\\"cd ~/StockHunter_Finmind && bash run_web.sh\\\"\" > /data/data/com.termux/files/home/.bashrc'"
 
 # 2. 建立引導讀取的 ~/.bash_profile
 adb shell "su u0_a166 -c 'echo -e \"if [ -f ~/.bashrc ]; then\n    . ~/.bashrc\nfi\" > /data/data/com.termux/files/home/.bash_profile'"
@@ -99,3 +99,5 @@ adb shell "su -c 'chown u0_a166:u0_a166 /data/data/com.termux/files/home/.bashrc
 * **`stock`**：一鍵開啟資料庫並啟動爬蟲（支援中途斷點續傳）。
 * **`stock-reset`**：一鍵將資料庫內的下載進度清空歸零（以便下一次進行完整重新下載）。
 * **`stock-export`**：一鍵打包 PostgreSQL 資料庫為備份檔，便於傳輸回電腦還原。
+* **`stock-ui`**：一鍵啟動互動式選單介面（圖形化終端介面）。
+* **`stock-web`**：一鍵啟動網頁儀表板服務（Web Dashboard）。
