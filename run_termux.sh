@@ -35,30 +35,12 @@ send_notification() {
     fi
 }
 
-# 判斷模式
-MODE="daily"
-if [ "$1" == "--history" ]; then
-    MODE="history"
-fi
-
 echo -e "${GREEN}====================================================${NC}"
 echo -e "${GREEN}🚀 StockHunter Termux 數據收集守護程序已啟動${NC}"
 echo -e "${GREEN}====================================================${NC}"
-
-if [ "$MODE" == "history" ]; then
-    echo -e "運行模式：${YELLOW}補登歷史資料模式 (History Mode)${NC}"
-    echo -e "開始日期：將使用各數據收集器之預設歷史起點 (如 2020-01-01)"
-    echo -e "進度處理：繼續使用資料庫中的歷史下載進度"
-else
-    echo -e "運行模式：${YELLOW}每日全新運行模式 (Daily Reset Mode)${NC}"
-    echo -e "開始日期：將使用各數據收集器之預設歷史起點 (如 2020-01-01)"
-    
-    # 在開始新的每日運行前，重置進度清單 (清空 done 記錄)
-    # 這樣今天運行時，所有的收集器才會再次被重新執行檢查
-    echo -e "正在重置今日進度清冊..."
-    python3 -c "from core.collector_engine import CollectorEngine; CollectorEngine().reset_progress()"
-    echo -e "${GREEN}✅ 進度清冊已初始化${NC}"
-fi
+echo -e "運行模式：${YELLOW}數據收集模式 (Crawl Mode)${NC}"
+echo -e "開始日期：將使用各數據收集器之預設歷史起點 (如 2020-01-01)"
+echo -e "進度處理：自動使用並更新資料庫中的下載進度 (支援斷點續傳)"
 echo ""
 
 while true; do
